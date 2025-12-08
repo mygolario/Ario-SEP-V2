@@ -66,6 +66,16 @@ Structure:
     "initialUsers": 100,
     "monthlyGrowth": 10
   },
+  "validator": {
+    "interviewScript": [
+      "Question 1 (Open-ended)",
+      "Question 2 (Problem-focused)",
+      "Question 3 (Solution-focused)"
+    ],
+    "goodSigns": ["They ask to buy it now", "They complain about current solutions"],
+    "badSigns": ["They say 'It's nice'", "They give vague compliments"],
+    "redFlags": ["Market is too small", "Competitors are free"]
+  },
   "marketAnalysis": {
     "tam": "Estimated Total Market Size (e.g., $10B)",
     "sam": "Serviceable Market (e.g., $1B)",
