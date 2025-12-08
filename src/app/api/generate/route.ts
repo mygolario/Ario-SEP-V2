@@ -26,10 +26,23 @@ Structure:
     "Step 4 (Farsi)",
     "Step 5 (Farsi)"
   ],
-  "landingPageCopy": {
+    "landingPageCopy": {
     "headline": "High-converting H1 outcome-based headline in Farsi",
     "subheadline": "Persuasive H2 subheadline in Farsi",
-    "cta": "Strong Call to Action button text in Farsi"
+    "cta": "Strong Call to Action button text in Farsi",
+    "features": [
+        { "title": "Feature 1 (Farsi)", "description": "Short benefit description (Farsi)", "iconName": "Zap" },
+        { "title": "Feature 2 (Farsi)", "description": "Short benefit description (Farsi)", "iconName": "Shield" },
+        { "title": "Feature 3 (Farsi)", "description": "Short benefit description (Farsi)", "iconName": "TrendingUp" }
+    ],
+    "testimonials": [
+        { "name": "Customer Name (Farsi)", "role": "Job Title (Farsi)", "quote": "Short glowing review (Farsi)" },
+        { "name": "Customer Name (Farsi)", "role": "Job Title (Farsi)", "quote": "Short glowing review (Farsi)" }
+    ],
+    "footer": {
+        "copyrightText": "© 2024 Business Name. All rights reserved (Farsi)",
+        "socialLinks": ["Instagram", "LinkedIn", "Twitter"]
+    }
   },
   "logoSVG": "<svg ...> ... </svg>",
   "leanCanvas": {
