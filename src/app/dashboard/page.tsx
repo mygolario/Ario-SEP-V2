@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Rocket, Palette, ScrollText, CheckCircle2, Layout, ArrowRight } from 'lucide-react';
+import { WebsitePreview } from '@/components/dashboard/WebsitePreview';
 
 interface BusinessData {
   businessName: string;
@@ -179,6 +180,16 @@ export default function DashboardPage() {
                 </div>
             </CardContent>
           </Card>
+
+          {/* Website Simulator (Spans Full Width) */}
+          <div className="md:col-span-3 mt-8">
+              <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <Layout className="w-6 h-6 text-indigo-500" />
+                  پیش‌نمایش زنده وب‌سایت
+              </h2>
+              <WebsitePreview data={data} />
+          </div>
+
 
         </div>
       </div>
