@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,21 +25,13 @@ interface BusinessData {
   roadmap?: { week: string; focus: string; tasks: string[] }[];
 }
 
-export default function DashboardClient() {
-  const [data, setData] = useState<BusinessData | null>(null);
-  const [loading, setLoading] = useState(true);
+interface DashboardClientProps {
+  initialData: BusinessData | null;
+}
 
-  useEffect(() => {
-    const storedData = localStorage.getItem('businessData');
-    if (storedData) {
-      try {
-        setData(JSON.parse(storedData));
-      } catch (e) {
-        console.error("Failed to parse business data", e);
-      }
-    }
-    setLoading(false);
-  }, []);
+export default function DashboardClient({ initialData }: DashboardClientProps) {
+  const [data] = useState<BusinessData | null>(initialData);
+
 
   const componentRef = useRef<HTMLDivElement>(null);
   
@@ -48,13 +40,7 @@ export default function DashboardClient() {
     documentTitle: `BusinessPlan_${new Date().toISOString().split('T')[0]}`,
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-500 animate-pulse">در حال بارگذاری...</p>
-      </div>
-    );
-  }
+
 
   if (!data) {
     return (

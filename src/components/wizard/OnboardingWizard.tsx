@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -90,7 +91,7 @@ export function OnboardingWizard() {
       setStep(step + 1);
     } else {
       // Final Step - Submit
-      await handleSubmit();
+      await handleFinish();
     }
   };
 
@@ -106,29 +107,35 @@ export function OnboardingWizard() {
     setFormData(prev => ({ ...prev, [currentStep.field]: value }));
   };
 
-  const handleSubmit = async () => {
-    console.log('Submitting form with data:', formData);
-    setIsGenerating(true);
-    try {
-        const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
+  const handleFinish = async () => {
+      setIsGenerating(true);
+      try {
+          const response = await fetch('/api/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+          });
 
-        if (!response.ok) {
-            throw new Error('API request failed');
-        }
+          if (!response.ok) {
+              if (response.status === 401) {
+                  // If unauthorized, maybe redirect to login or show error?
+                  // For now, assuming middleware handles general protection, 
+                  // but specific API call might fail if session expired.
+                  router.push('/login');
+                  return;
+              }
+              throw new Error('Failed to generate plan');
+          }
 
-        const data = await response.json();
-        console.log('API Response:', data);
-        localStorage.setItem('businessData', JSON.stringify(data));
-        router.push('/dashboard');
-    } catch (error) {
-        console.error(error);
-        alert('خطایی رخ داد. لطفا دوباره تلاش کنید.');
-        setIsGenerating(false);
-    }
+          await response.json();
+          // Data is now saved in DB by the API, so we just redirect.
+          router.push('/dashboard');
+
+      } catch (error) {
+          console.error(error);
+          setIsGenerating(false);
+          // Ideally show a toast error here
+      }
   };
 
   // Loading UI
