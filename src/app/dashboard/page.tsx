@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Palette, ScrollText, CheckCircle2, Layout, ArrowRight } from 'lucide-react';
+import { Rocket, Palette, ScrollText, CheckCircle2, Layout, ArrowRight, Download } from 'lucide-react';
 import { WebsitePreview } from '@/components/dashboard/WebsitePreview';
 import { Roadmap } from '@/components/dashboard/Roadmap';
+import { useReactToPrint } from 'react-to-print';
+import { PrintablePlan } from '@/components/dashboard/PrintablePlan';
 
 interface BusinessData {
   businessName: string;
@@ -39,8 +41,21 @@ export default function DashboardPage() {
     setLoading(false);
   }, []);
 
+  const componentRef = useRef<HTMLDivElement>(null);
+  
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: `BusinessPlan_${new Date().toISOString().split('T')[0]}`,
+  });
+
   if (loading) {
-// ... existing loading & empty states ...
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <p className="text-slate-500 animate-pulse">در حال بارگذاری...</p>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 text-center space-y-6" dir="rtl">
@@ -58,18 +73,36 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-12" dir="rtl">
+      {/* Hidden Print Component */}
+      <div className="hidden">
+           {data && <PrintablePlan ref={componentRef} data={data} />}
+      </div>
+
       <div className="max-w-7xl mx-auto space-y-8">
         
-        <div className="flex justify-between items-center">
-             <h1 className="text-2xl font-bold text-slate-400">داشبورد مدیریتی</h1>
-             <Link href="/start">
-              <Button variant="outline" size="sm">پروژه جدید</Button>
-             </Link>
+        <div className="flex justify-between items-center flex-wrap gap-4">
+             <div className="flex flex-col">
+                <h1 className="text-2xl font-bold text-slate-400">داشبورد مدیریتی</h1>
+             </div>
+             <div className="flex gap-3">
+                 <Link href="/start">
+                  <Button variant="outline" size="sm">پروژه جدید</Button>
+                 </Link>
+                 <Button 
+                    onClick={() => handlePrint()}
+                    variant="default" 
+                    size="sm" 
+                    className="gap-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900"
+                  >
+                    <Download className="w-4 h-4" />
+                    دانلود طرح (PDF)
+                 </Button>
+             </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* ... Card A ... */}
+          {/* Card A: Identity (Spans 2 cols) */}
           <Card className="md:col-span-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 shadow-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -197,5 +230,4 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-}
 }
