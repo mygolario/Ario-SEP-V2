@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 // Steps Configuration
 const STEPS = [
@@ -66,8 +67,10 @@ const variants = {
 };
 
 export function OnboardingWizard() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 for Next (Move Left), 1 for Back (Move Right)
+  const [direction, setDirection] = useState(0); 
+  const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState({
     idea: '',
     audience: '',
@@ -80,20 +83,19 @@ export function OnboardingWizard() {
   const isFirstStep = step === 0;
   const isLastStep = step === STEPS.length - 1;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < STEPS.length - 1) {
-      setDirection(-1); // Entering from Left (Visual), Moving to "Left" Index? No, moving forward.
-      // Instruction: "Entering Next Step: Slide in from the Left." -> x: -100% to 0
-      // Instruction: "Exiting Current Step: Slide out to the Right." -> x: 0 to 100%
-      // My variant logic: 
-      // If direction is -1: enter x: -100%, exit x: 100%. Matches instructions.
+      setDirection(-1);
       setStep(step + 1);
+    } else {
+      // Final Step - Submit
+      await handleSubmit();
     }
   };
 
   const handleBack = () => {
     if (step > 0) {
-      setDirection(1); // Reverse
+      setDirection(1); 
       setStep(step - 1);
     }
   };
@@ -101,6 +103,49 @@ export function OnboardingWizard() {
   const updateField = (value: string) => {
     setFormData(prev => ({ ...prev, [currentStep.field]: value }));
   };
+
+  const handleSubmit = async () => {
+    setIsGenerating(true);
+    try {
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error('API request failed');
+        }
+
+        const data = await response.json();
+        localStorage.setItem('businessData', JSON.stringify(data));
+        router.push('/dashboard');
+    } catch (error) {
+        console.error(error);
+        alert('خطایی رخ داد. لطفا دوباره تلاش کنید.');
+        setIsGenerating(false);
+    }
+  };
+
+  // Loading UI
+  if (isGenerating) {
+      return (
+          <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-[400px] text-center space-y-8" dir="rtl">
+              <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                  <Loader2 className="h-16 w-16 text-primary animate-spin relative z-10" />
+              </div>
+              <div className="space-y-4">
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                    هوش مصنوعی در حال ساخت امپراتوری شماست...
+                  </h2>
+                  <p className="text-slate-500 animate-pulse">
+                    تحلیل بازار... طراحی لوگو... تدوین استراتژی...
+                  </p>
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4" dir="rtl">
