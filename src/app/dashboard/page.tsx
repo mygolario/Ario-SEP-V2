@@ -1,39 +1,168 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Rocket, Palette, ScrollText, CheckCircle2, Layout, ArrowRight } from 'lucide-react';
+
+interface BusinessData {
+  businessName: string;
+  tagline: string;
+  summary: string;
+  colorPalette: string[];
+  marketingSteps: string[];
+  landingPageCopy: {
+    headline: string;
+    subheadline: string;
+    cta: string;
+  };
+}
 
 export default function DashboardPage() {
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [data, setData] = useState<BusinessData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedData = localStorage.getItem('businessData');
     if (storedData) {
-      setData(JSON.parse(storedData));
+      try {
+        setData(JSON.parse(storedData));
+      } catch (e) {
+        console.error("Failed to parse business data", e);
+      }
     }
+    setLoading(false);
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <p className="text-slate-500 animate-pulse">در حال بارگذاری...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 text-center space-y-6" dir="rtl">
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">هنوز پروژه‌ای ثبت نکرده‌اید</h1>
+        <p className="text-slate-500">برای دیدن جادوی هوش مصنوعی، ابتدا ایده خود را ثبت کنید.</p>
+        <Link href="/start">
+          <Button className="gap-2">
+            ساخت پروژه جدید
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8" dir="rtl">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-12" dir="rtl">
       <div className="max-w-7xl mx-auto space-y-8">
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-50">
-          داشبورد مدیریتی شما
-        </h1>
         
-        {!data ? (
-           <p className="text-slate-500">در حال بارگذاری اطلاعات...</p>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>اطلاعات خام (Raw JSON)</CardTitle>
+        <div className="flex justify-between items-center">
+             <h1 className="text-2xl font-bold text-slate-400">داشبورد مدیریتی</h1>
+             <Link href="/start">
+              <Button variant="outline" size="sm">پروژه جدید</Button>
+             </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* Card A: Identity (Spans 2 cols) */}
+          <Card className="md:col-span-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
+                {data.businessName}
+              </CardTitle>
+              <Rocket className="w-8 h-8 text-indigo-500 opacity-20" />
             </CardHeader>
             <CardContent>
-              <pre className="bg-slate-100 dark:bg-slate-900 p-4 rounded-lg overflow-auto max-h-[500px] text-left" dir="ltr">
-                {JSON.stringify(data, null, 2)}
-              </pre>
+              <p className="text-xl text-slate-600 dark:text-slate-300 font-medium">
+                {data.tagline}
+              </p>
             </CardContent>
           </Card>
-        )}
+
+          {/* Card B: Visuals (Spans 1 col) */}
+          <Card className="md:col-span-1 shadow-md">
+            <CardHeader className="flex flex-row items-center gap-2 pb-2">
+              <Palette className="w-5 h-5 text-slate-500" />
+              <CardTitle className="text-lg text-slate-700 dark:text-slate-200">پالت رنگی</CardTitle>
+            </CardHeader>
+            <CardContent className="flex gap-4 justify-center py-4">
+              {data.colorPalette.map((color, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-2 group">
+                    <div 
+                        className="w-12 h-12 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-110" 
+                        style={{ backgroundColor: color }}
+                    />
+                    <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity font-mono" dir="ltr">{color}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Card C: Strategy (Spans 3 cols - Full) */}
+          <Card className="md:col-span-3 border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-950/10">
+            <CardHeader className="flex flex-row items-center gap-2">
+              <ScrollText className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+              <CardTitle className="text-xl text-emerald-800 dark:text-emerald-400">برنامه استراتژیک</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg leading-relaxed text-emerald-900/80 dark:text-emerald-200/80 text-justify">
+                {data.summary}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card D: Action Plan (Spans 1 col) */}
+          <Card className="md:col-span-1 h-full">
+            <CardHeader className="flex flex-row items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-blue-500" />
+              <CardTitle className="text-lg text-slate-800 dark:text-slate-200">گام‌های بازاریابی</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {data.marketingSteps.map((step, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-bold shrink-0">
+                      {idx + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Card E: Website Copy (Spans 2 cols) */}
+          <Card className="md:col-span-2 flex flex-col justify-center border-slate-200 dark:border-slate-800">
+            <CardHeader className="flex flex-row items-center gap-2">
+              <Layout className="w-5 h-5 text-slate-500" />
+              <CardTitle className="text-lg text-slate-800 dark:text-slate-200">متن وب‌سایت پیشنهادی</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="p-6 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                        {data.landingPageCopy.headline}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-lg">
+                        {data.landingPageCopy.subheadline}
+                    </p>
+                    <div className="pt-4">
+                        <Button size="lg" className="bg-primary text-primary-foreground shadow-xl">
+                            {data.landingPageCopy.cta}
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
+
+        </div>
       </div>
     </div>
   );
