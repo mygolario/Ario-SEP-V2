@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export function Hero() {
   return (
@@ -12,10 +13,10 @@ export function Hero() {
           <div className="flex flex-col justify-center space-y-4">
             <div className="space-y-4">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-sans text-slate-900 dark:text-slate-50">
-                Launch Your Dream Business in 60 Seconds.
+                امپراتوری کسب‌وکارتان را در ۶۰ ثانیه بسازید
               </h1>
               <p className="max-w-[600px] text-slate-500 md:text-xl dark:text-slate-400 font-medium">
-                The AI Co-Founder that builds your logo, strategy, and website instantly.
+                هم‌بنیان‌گذار هوشمند شما که لوگو، استراتژی و وب‌سایت شما را می‌سازد.
               </p>
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -23,10 +24,12 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button size="lg" className="px-8 h-12 text-lg font-semibold shadow-lg">
-                  Start Building Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+                <Link href="/start">
+                  <Button size="lg" className="px-8 h-12 text-lg font-semibold shadow-lg">
+                    شروع کنید (رایگان)
+                    <ArrowLeft className="mr-2 h-5 w-5" />
+                  </Button>
+                </Link>
               </motion.div>
             </div>
           </div>

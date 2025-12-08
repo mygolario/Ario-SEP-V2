@@ -84,6 +84,7 @@ export function OnboardingWizard() {
   const isLastStep = step === STEPS.length - 1;
 
   const handleNext = async () => {
+    console.log('Next clicked. Current step:', step);
     if (step < STEPS.length - 1) {
       setDirection(-1);
       setStep(step + 1);
@@ -94,6 +95,7 @@ export function OnboardingWizard() {
   };
 
   const handleBack = () => {
+    console.log('Back clicked. Current step:', step);
     if (step > 0) {
       setDirection(1); 
       setStep(step - 1);
@@ -105,6 +107,7 @@ export function OnboardingWizard() {
   };
 
   const handleSubmit = async () => {
+    console.log('Submitting form with data:', formData);
     setIsGenerating(true);
     try {
         const response = await fetch('/api/generate', {
@@ -118,6 +121,7 @@ export function OnboardingWizard() {
         }
 
         const data = await response.json();
+        console.log('API Response:', data);
         localStorage.setItem('businessData', JSON.stringify(data));
         router.push('/dashboard');
     } catch (error) {
@@ -224,6 +228,7 @@ export function OnboardingWizard() {
 
         <CardFooter className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 p-6">
           <Button 
+            type="button"
             variant="ghost" 
             onClick={handleBack} 
             disabled={isFirstStep}
@@ -234,6 +239,7 @@ export function OnboardingWizard() {
           </Button>
           
           <Button 
+            type="button"
             onClick={handleNext}
             className="bg-slate-900 text-white hover:bg-slate-800 px-8"
           >
