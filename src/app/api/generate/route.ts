@@ -60,6 +60,12 @@ Structure:
     "founderRoles": ["CEO Role description", "CTO Role description"],
     "riskFactors": ["Risk 1", "Risk 2", "Risk 3"]
   },
+  "financials": {
+    "suggestedPrice": 500000, 
+    "costPerUnit": 150000,
+    "initialUsers": 100,
+    "monthlyGrowth": 10
+  },
   "marketAnalysis": {
     "tam": "Estimated Total Market Size (e.g., $10B)",
     "sam": "Serviceable Market (e.g., $1B)",
