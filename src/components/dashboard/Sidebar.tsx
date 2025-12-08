@@ -14,6 +14,9 @@ import {
   TrendingUp,
   CheckCircle2,
   Settings,
+  Scale,
+  Calculator,
+  MessageCircle,
 } from 'lucide-react';
 
 const MENU_ITEMS = [
@@ -62,6 +65,21 @@ const MENU_ITEMS = [
     title: 'مربی اجرایی',
     href: '/dashboard/coach',
     icon: CheckCircle2,
+  },
+  {
+    title: 'امور حقوقی و قراردادها',
+    href: '/dashboard/legal',
+    icon: Scale,
+  },
+  {
+    title: 'پیش‌بینی مالی',
+    href: '/dashboard/finance',
+    icon: Calculator,
+  },
+  {
+    title: 'تست و اعتبارسنجی',
+    href: '/dashboard/validator',
+    icon: MessageCircle,
   },
   {
     title: 'تنظیمات',
