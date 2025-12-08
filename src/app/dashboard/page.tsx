@@ -17,6 +17,7 @@ interface BusinessData {
     subheadline: string;
     cta: string;
   };
+  logoSVG?: string;
 }
 
 export default function DashboardPage() {
@@ -91,18 +92,35 @@ export default function DashboardPage() {
           <Card className="md:col-span-1 shadow-md">
             <CardHeader className="flex flex-row items-center gap-2 pb-2">
               <Palette className="w-5 h-5 text-slate-500" />
-              <CardTitle className="text-lg text-slate-700 dark:text-slate-200">پالت رنگی</CardTitle>
+              <CardTitle className="text-lg text-slate-700 dark:text-slate-200">هویت بصری</CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-4 justify-center py-4">
-              {data.colorPalette.map((color, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-2 group">
+            <CardContent className="flex flex-col items-center gap-6 py-4">
+               {/* Logo Preview */}
+               <div className="w-full flex justify-center">
+                  {data.logoSVG ? (
                     <div 
-                        className="w-12 h-12 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-110" 
-                        style={{ backgroundColor: color }}
+                      className="w-32 h-32 rounded-xl shadow-inner bg-slate-50 dark:bg-slate-800 p-2 flex items-center justify-center overflow-hidden"
+                      dangerouslySetInnerHTML={{ __html: data.logoSVG }} 
                     />
-                    <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity font-mono" dir="ltr">{color}</span>
-                </div>
-              ))}
+                  ) : (
+                    <div className="w-32 h-32 rounded-xl shadow-inner bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                       <span className="text-4xl font-bold text-slate-300">{data.businessName.substring(0,2)}</span>
+                    </div>
+                  )}
+               </div>
+
+               {/* Color Palette */}
+               <div className="flex gap-3">
+                  {data.colorPalette.map((color, idx) => (
+                    <div key={idx} className="flex flex-col items-center gap-1 group">
+                        <div 
+                            className="w-8 h-8 rounded-full border border-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-110" 
+                            style={{ backgroundColor: color }}
+                        />
+                        <span className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity font-mono" dir="ltr">{color}</span>
+                    </div>
+                  ))}
+               </div>
             </CardContent>
           </Card>
 

@@ -19,37 +19,48 @@ export async function POST(req: Request) {
       );
     }
 
-    const systemPrompt = `You are a professional Startup Consultant. You speak fluent, professional Farsi. You must respond ONLY in valid JSON format.`;
+    const systemPrompt = `
+    You are a professional Startup Consultant and an expert Graphic Designer. You speak fluent, professional Farsi.
+    
+    You must analyze the following user inputs and generate a comprehensive business plan in JSON format.
+    
+    User Inputs:
+    - Idea: ${idea}
+    - Audience: ${audience}
+    - Vibe: ${vibe}
+    - Budget: ${budget}
+    - Goal: ${goal}
 
-    const userPrompt = `
-      Create a comprehensive business startup plan based on the following details:
-      
-      - Idea: ${idea}
-      - Target Audience: ${audience}
-      - Brand Vibe: ${vibe}
-      - Budget: ${budget}
-      - Main Goal: ${goal}
-      
-      Output strictly in the following JSON format:
-      {
-        "businessName": "Suggested Name in Farsi",
-        "tagline": "A catchy slogan in Farsi",
-        "summary": "Executive summary (2 sentences in Farsi)",
-        "colorPalette": ["#hex1", "#hex2", "#hex3"],
-        "marketingSteps": ["Step 1", "Step 2", "Step 3"],
-        "landingPageCopy": {
-           "headline": "Compelling Headline in Farsi",
-           "subheadline": "Persuasive Subheadline in Farsi",
-           "cta": "Call to Action in Farsi"
-        }
-      }
+    Instructions:
+    1. "businessName": Suggest a creative, catchy name in FARSI.
+    2. "tagline": A short, punchy slogan in FARSI.
+    3. "summary": A 2-sentence executive summary in FARSI.
+    4. "colorPalette": An array of 3 hex color codes.
+    5. "marketingSteps": An array of 3 actionable marketing steps in FARSI.
+    6. "landingPageCopy": An object with "headline", "subheadline", and "cta" (Call to Action) in FARSI.
+    7. "logoSVG": Create a modern, professional, minimalist SVG code string for this business. Use the suggested color palette. The SVG should be simple (icon + text or abstract shape). Do NOT use markdown code blocks, just the raw SVG string starting with <svg and ending with </svg>.
+
+    Your response MUST be a valid JSON object with the following structure:
+    {
+      "businessName": "...",
+      "tagline": "...",
+      "summary": "...",
+      "colorPalette": ["...", "...", "..."],
+      "marketingSteps": ["...", "...", "..."],
+      "landingPageCopy": {
+        "headline": "...",
+        "subheadline": "...",
+        "cta": "..."
+      },
+      "logoSVG": "<svg ...>...</svg>"
+    }
     `;
 
     const completion = await openai.chat.completions.create({
       model: 'openai/gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'user', content: 'Generate the business plan.' },
       ],
       response_format: { type: 'json_object' },
     });
