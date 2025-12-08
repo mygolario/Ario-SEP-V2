@@ -32,6 +32,16 @@ Structure:
     "cta": "Strong Call to Action button text in Farsi"
   },
   "logoSVG": "<svg ...> ... </svg>",
+  "leanCanvas": {
+    "problem": "Top 1-3 problems (Farsi)",
+    "solution": "Top 1-3 features (Farsi)",
+    "uniqueValue": "Single, clear, compelling message (Farsi)",
+    "unfairAdvantage": "Can't be easily copied or bought (Farsi)",
+    "customerSegments": "Target customers (Farsi)",
+    "channels": "Path to customers (Farsi)",
+    "revenueStream": "Revenue model (Farsi)",
+    "costStructure": "Fixed and variable costs (Farsi)"
+  },
   "roadmap": [
      { "week": "هفته اول", "focus": "Research & Setup", "tasks": ["Task 1", "Task 2"] },
      { "week": "هفته دوم", "focus": "MVP Development", "tasks": ["Task 1", "Task 2"] },
