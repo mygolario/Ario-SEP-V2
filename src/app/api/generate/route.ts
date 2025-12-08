@@ -55,6 +55,11 @@ Structure:
     "revenueStream": "Revenue model (Farsi)",
     "costStructure": "Fixed and variable costs (Farsi)"
   },
+  "legal": {
+    "ndaSummary": "A 1-paragraph summary of confidentiality terms in Farsi.",
+    "founderRoles": ["CEO Role description", "CTO Role description"],
+    "riskFactors": ["Risk 1", "Risk 2", "Risk 3"]
+  },
   "marketAnalysis": {
     "tam": "Estimated Total Market Size (e.g., $10B)",
     "sam": "Serviceable Market (e.g., $1B)",
