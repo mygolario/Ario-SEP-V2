@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Rocket, Palette, ScrollText, CheckCircle2, Layout, ArrowRight } from 'lucide-react';
 import { WebsitePreview } from '@/components/dashboard/WebsitePreview';
+import { Roadmap } from '@/components/dashboard/Roadmap';
 
 interface BusinessData {
   businessName: string;
@@ -19,6 +20,7 @@ interface BusinessData {
     cta: string;
   };
   logoSVG?: string;
+  roadmap?: { week: string; focus: string; tasks: string[] }[];
 }
 
 export default function DashboardPage() {
@@ -38,13 +40,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-500 animate-pulse">در حال بارگذاری...</p>
-      </div>
-    );
-  }
-
+// ... existing loading & empty states ...
   if (!data) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 text-center space-y-6" dir="rtl">
@@ -73,7 +69,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* Card A: Identity (Spans 2 cols) */}
+          {/* ... Card A ... */}
           <Card className="md:col-span-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 shadow-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -89,7 +85,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Card B: Visuals (Spans 1 col) */}
+          {/* ... Card B ... */}
           <Card className="md:col-span-1 shadow-md">
             <CardHeader className="flex flex-row items-center gap-2 pb-2">
               <Palette className="w-5 h-5 text-slate-500" />
@@ -125,7 +121,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Card C: Strategy (Spans 3 cols - Full) */}
+          {/* ... Card C ... */}
           <Card className="md:col-span-3 border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-950/10">
             <CardHeader className="flex flex-row items-center gap-2">
               <ScrollText className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
@@ -138,7 +134,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Card D: Action Plan (Spans 1 col) */}
+          {/* ... Card D ... */}
           <Card className="md:col-span-1 h-full">
             <CardHeader className="flex flex-row items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-blue-500" />
@@ -158,7 +154,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Card E: Website Copy (Spans 2 cols) */}
+          {/* ... Card E ... */}
           <Card className="md:col-span-2 flex flex-col justify-center border-slate-200 dark:border-slate-800">
             <CardHeader className="flex flex-row items-center gap-2">
               <Layout className="w-5 h-5 text-slate-500" />
@@ -190,9 +186,16 @@ export default function DashboardPage() {
               <WebsitePreview data={data} />
           </div>
 
+          {/* Roadmap (Spans Full Width) */}
+          {data.roadmap && (
+             <div className="md:col-span-3 mt-8">
+                <Roadmap roadmap={data.roadmap} />
+             </div>
+          )}
 
         </div>
       </div>
     </div>
   );
+}
 }

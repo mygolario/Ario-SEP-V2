@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     4. "colorPalette": An array of 3 hex color codes.
     5. "marketingSteps": An array of 3 actionable marketing steps in FARSI.
     6. "landingPageCopy": An object with "headline", "subheadline", and "cta" (Call to Action) in FARSI.
-    7. "logoSVG": Create a modern, professional, minimalist SVG code string for this business. Use the suggested color palette. The SVG should be simple (icon + text or abstract shape). Do NOT use markdown code blocks, just the raw SVG string starting with <svg and ending with </svg>.
+    8. "roadmap": Generate a 4-Week Execution Roadmap. For each week, provide a focus title and 2-3 actionable tasks in FARSI.
 
     Your response MUST be a valid JSON object with the following structure:
     {
@@ -52,7 +52,13 @@ export async function POST(req: Request) {
         "subheadline": "...",
         "cta": "..."
       },
-      "logoSVG": "<svg ...>...</svg>"
+      "logoSVG": "<svg ...>...</svg>",
+      "roadmap": [
+        { "week": "هفته اول", "focus": "...", "tasks": ["...", "..."] },
+        { "week": "هفته دوم", "focus": "...", "tasks": ["...", "..."] },
+        { "week": "هفته سوم", "focus": "...", "tasks": ["...", "..."] },
+        { "week": "هفته چهارم", "focus": "...", "tasks": ["...", "..."] }
+      ]
     }
     `;
 
