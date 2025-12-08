@@ -42,6 +42,16 @@ Structure:
     "revenueStream": "Revenue model (Farsi)",
     "costStructure": "Fixed and variable costs (Farsi)"
   },
+  "marketAnalysis": {
+    "tam": "Estimated Total Market Size (e.g., $10B)",
+    "sam": "Serviceable Market (e.g., $1B)",
+    "som": "Target Market (e.g., $100M)",
+    "competitors": [
+        { "name": "Competitor A", "strength": "...", "weakness": "..." },
+        { "name": "Competitor B", "strength": "...", "weakness": "..." },
+        { "name": "Competitor C", "strength": "...", "weakness": "..." }
+    ]
+  },
   "roadmap": [
      { "week": "هفته اول", "focus": "Research & Setup", "tasks": ["Task 1", "Task 2"] },
      { "week": "هفته دوم", "focus": "MVP Development", "tasks": ["Task 1", "Task 2"] },
