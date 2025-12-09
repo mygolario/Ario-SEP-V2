@@ -91,7 +91,15 @@ Structure:
      { "week": "هفته دوم", "focus": "MVP Development", "tasks": ["Task 1", "Task 2"] },
      { "week": "هفته سوم", "focus": "Marketing & Launch", "tasks": ["Task 1", "Task 2"] },
      { "week": "هفته چهارم", "focus": "Growth & Scale", "tasks": ["Task 1", "Task 2"] }
-  ]
+  ],
+  "deepPlan": {
+    "executiveSummary": "Long comprehensive executive summary (3-4 paragraphs)",
+    "companyOverview": "Mission, Vision, History, and future goals details",
+    "marketAnalysis": "Detailed market size, trends, and growth potential breakdown",
+    "marketingStrategy": "4P Strategy (Product, Price, Place, Promotion) in depth",
+    "operationalPlan": "Logistics, Location, Legal, and Tech stack details",
+    "financialPlan": "Funding requirements, usage of funds, and revenue projections"
+  }
 }
 
 Role:
