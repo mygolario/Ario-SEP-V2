@@ -1,20 +1,15 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
 
 export async function login(formData: FormData) {
-  console.log("Login action triggered");
   const supabase = createClient()
+  
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  
-  if (!email || !password) {
-      redirect('/login?error=Email and password are required')
-  }
 
-  console.log("Attempting login for:", email);
+  console.log("Attempting Login for:", email) // DEBUG LOG
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -22,44 +17,35 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    console.error("Login error:", error.message);
-    // Determine if it's an invalid credentials error
-    if (error.message.includes('Invalid login credentials')) {
-        redirect('/login?error=InvalidCredentials')
-    }
-    redirect('/login?error=' + encodeURIComponent(error.message))
+    console.error("Supabase Login Error:", error.message) // DEBUG LOG
+    return redirect('/login?error=InvalidCredentials')
   }
 
-  console.log("Login successful, redirecting...");
-  revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  console.log("Login Successful! Redirecting...") // DEBUG LOG
+  return redirect('/dashboard')
 }
 
 export async function signup(formData: FormData) {
   const supabase = createClient()
+  
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const fullName = formData.get('full_name') as string
+  const full_name = formData.get('full_name') as string
 
-  if (!email || !password || !fullName) {
-      redirect('/signup?error=All fields are required')
-  }
+  console.log("Attempting Signup for:", email)
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-        data: {
-            full_name: fullName,
-        }
-    }
+      data: { full_name },
+    },
   })
 
   if (error) {
-    console.error("Signup error:", error.message);
-    redirect('/signup?error=' + encodeURIComponent(error.message))
+    console.error("Signup Error:", error.message)
+    return redirect('/signup?error=' + error.message)
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  return redirect('/dashboard')
 }
