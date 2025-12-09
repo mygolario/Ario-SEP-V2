@@ -2,7 +2,11 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { projectId?: string }
+}) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -10,14 +14,34 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1);
+  let projectData = null;
 
-  const initialData = projects && projects.length > 0 ? projects[0].business_data : null;
+  if (searchParams.projectId) {
+     const { data: project } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', searchParams.projectId)
+        .eq('user_id', user.id)
+        .single();
+     
+     if (project) {
+        projectData = project.business_data;
+     }
+  } 
+  
+  if (!projectData) {
+      // Fallback to latest
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (projects && projects.length > 0) {
+          projectData = projects[0].business_data;
+      }
+  }
 
-  return <DashboardClient initialData={initialData} />;
+  return <DashboardClient initialData={projectData} />;
 }
