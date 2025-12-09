@@ -136,8 +136,8 @@ export function LoginForm() {
       
       <p className="text-center text-sm text-slate-500">
         حساب کاربری ندارید؟{" "}
-        <a href="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
-          شروع کنید
+        <a href="/signup" className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+          ثبت نام کنید
         </a>
       </p>
     </div>
