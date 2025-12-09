@@ -114,7 +114,7 @@ export async function POST(req: Request) {
     const { idea, stage, budget } = body;
 
     const completion = await openai.chat.completions.create({
-      model: "google/gemini-flash-1.5",
+      model: "google/gemini-3-pro-preview",
       messages: [
         { role: "system", content: systemPrompt },
         { 
@@ -126,6 +126,7 @@ export async function POST(req: Request) {
     });
 
     const content = completion.choices[0].message.content;
+    console.log("AI Raw Response:", content); // Debug log
     
     if (!content) {
       throw new Error("No content generated");
