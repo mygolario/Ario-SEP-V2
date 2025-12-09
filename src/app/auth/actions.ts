@@ -6,21 +6,19 @@ import { redirect } from 'next/navigation'
 export async function login(formData: FormData) {
   const supabase = createClient()
   
-  // SANITIZATION: Remove leading/trailing spaces
+  // 1. Sanitize Inputs
   const email = String(formData.get('email')).trim()
   const password = String(formData.get('password')).trim()
 
-  console.log("LOGIN DEBUG -> Email:", email) 
-  console.log("LOGIN DEBUG -> Password Length:", password.length)
-
+  // 2. Attempt Login
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
   if (error) {
-    console.error("LOGIN ERROR ->", error.message)
-    return redirect('/login?error=' + error.message)
+    console.error("Login Error:", error.message)
+    return redirect(`/login?error=${encodeURIComponent('اطلاعات ورود نادرست است')}`)
   }
 
   return redirect('/dashboard')
@@ -29,14 +27,13 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = createClient()
   
-  // SANITIZATION
+  // 1. Sanitize Inputs
   const email = String(formData.get('email')).trim()
   const password = String(formData.get('password')).trim()
   const full_name = String(formData.get('full_name')).trim()
 
-  console.log("SIGNUP DEBUG -> Email:", email)
-
-  const { data, error } = await supabase.auth.signUp({
+  // 2. Attempt Signup
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -45,38 +42,9 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    console.error("SIGNUP ERROR ->", error.message)
-    return redirect('/signup?error=' + error.message)
-  }
-
-  // If email confirmation is required, session will be null
-  if (!data.session) {
-    return redirect('/login?message=Please check your email to confirm your account')
+    console.error("Signup Error:", error.message)
+    return redirect(`/signup?error=${encodeURIComponent(error.message)}`)
   }
 
   return redirect('/dashboard')
-}
-
-export async function updateProfile(formData: FormData) {
-  const supabase = createClient()
-  
-  const full_name = String(formData.get('full_name')).trim()
-
-  const { error } = await supabase.auth.updateUser({
-    data: { full_name }
-  })
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  // Revalidate might be needed if we display this data elsewhere 
-  // (though Supabase auth session usually updates on refresh or manual reload)
-  return { success: true }
-}
-
-export async function logout() {
-  const supabase = createClient()
-  await supabase.auth.signOut()
-  return redirect('/login')
 }
