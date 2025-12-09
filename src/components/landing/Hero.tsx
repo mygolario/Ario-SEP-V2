@@ -36,7 +36,7 @@ export function Hero() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
-          <Link href="/start">
+          <Link href="/signup">
             <Button size="lg" className="h-12 px-8 text-base bg-white text-slate-900 hover:bg-slate-100 hover:text-slate-900 border-0 shadow-xl shadow-white/10">
               شروع رایگان
               <ArrowLeft className="mr-2 h-5 w-5" />

@@ -34,9 +34,9 @@ export function Navbar() {
               ورود
             </Button>
           </Link>
-          <Link href="/start">
+          <Link href="/signup">
             <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/25 border-0">
-              شروع رایگان
+              ثبت نام
             </Button>
           </Link>
         </div>
