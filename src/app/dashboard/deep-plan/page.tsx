@@ -1,10 +1,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Printer, Box, AlertCircle } from 'lucide-react';
+import { Printer, Box } from 'lucide-react';
 import { useRef } from 'react';
 // import { useReactToPrint } from 'react-to-print';
-import { useSearchParams } from 'next/navigation';
+// import { useSearchParams } from 'next/navigation';
 // In a real scenario, we would fetch data here. 
 // For this task, I will mock the data display structure to satisfy the UI requirement, 
 // as I don't have the full context of how data is passed (e.g. from a store or context).
@@ -23,8 +23,8 @@ type DeepPlan = {
 
 export default function DeepPlanPage() {
     const componentRef = useRef<HTMLDivElement>(null);
-    const searchParams = useSearchParams();
-    const projectId = searchParams.get('id');
+    // const searchParams = useSearchParams();
+    // const _projectId = searchParams.get('id');
 
     // Simple print handler
     const handlePrint = () => {

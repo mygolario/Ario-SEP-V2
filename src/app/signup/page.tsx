@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useFormStatus } from 'react-dom';
 
 function SubmitButton() {
@@ -132,7 +132,9 @@ export default function SignupPage() {
               <span className="font-bold text-lg text-slate-900">بیزینس بیلدر</span>
            </div>
 
-           <SignupForm />
+           <Suspense fallback={<div>Loading...</div>}>
+             <SignupForm />
+           </Suspense>
         </div>
       </div>
 
@@ -182,7 +184,7 @@ export default function SignupPage() {
         {/* Quote */}
         <div className="relative z-10">
           <blockquote className="text-xl lg:text-3xl font-bold leading-relaxed mb-6 tracking-tight">
-            "این ابزار زندگی کاری من را تغییر داد. حالا می‌توانم روی رشد کسب‌وکارم تمرکز کنم."
+            &quot;این ابزار زندگی کاری من را تغییر داد. حالا می‌توانم روی رشد کسب‌وکارم تمرکز کنم.&quot;
           </blockquote>
           <div className="flex items-center gap-4">
              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold border-2 border-white text-lg">

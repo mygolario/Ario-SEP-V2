@@ -6,10 +6,12 @@ import { redirect } from 'next/navigation'
 export async function login(formData: FormData) {
   const supabase = createClient()
   
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  // SANITIZATION: Remove leading/trailing spaces
+  const email = String(formData.get('email')).trim()
+  const password = String(formData.get('password')).trim()
 
-  console.log("Attempting Login for:", email) // DEBUG LOG
+  console.log("LOGIN DEBUG -> Email:", email) 
+  console.log("LOGIN DEBUG -> Password Length:", password.length)
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -17,22 +19,22 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    console.error("Supabase Login Error:", error.message) // DEBUG LOG
-    return redirect('/login?error=InvalidCredentials')
+    console.error("LOGIN ERROR ->", error.message)
+    return redirect('/login?error=Invalid login credentials')
   }
 
-  console.log("Login Successful! Redirecting...") // DEBUG LOG
   return redirect('/dashboard')
 }
 
 export async function signup(formData: FormData) {
   const supabase = createClient()
   
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const full_name = formData.get('full_name') as string
+  // SANITIZATION
+  const email = String(formData.get('email')).trim()
+  const password = String(formData.get('password')).trim()
+  const full_name = String(formData.get('full_name')).trim()
 
-  console.log("Attempting Signup for:", email)
+  console.log("SIGNUP DEBUG -> Email:", email)
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -43,7 +45,7 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    console.error("Signup Error:", error.message)
+    console.error("SIGNUP ERROR ->", error.message)
     return redirect('/signup?error=' + error.message)
   }
 

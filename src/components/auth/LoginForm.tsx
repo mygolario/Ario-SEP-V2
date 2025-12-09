@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Rocket, AlertTriangle, Eye, EyeOff, Lock, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, Lock } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';

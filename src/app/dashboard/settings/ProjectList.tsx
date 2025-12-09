@@ -9,6 +9,7 @@ import { useTransition } from 'react';
 
 type Project = {
     id: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     business_data: any;
     created_at: string;
 };
