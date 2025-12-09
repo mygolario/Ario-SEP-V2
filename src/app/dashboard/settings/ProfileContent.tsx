@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { updateProfile, logout } from '@/app/auth/actions';
+import { updateProfile, signOut } from '@/app/auth/actions';
 import { LogOut, Save, User as UserIcon, Loader2 } from 'lucide-react';
 import { useTransition } from 'react';
 
@@ -102,7 +102,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
       <div className="border-t border-slate-100 pt-6">
           <h4 className="font-bold text-rose-700 mb-4 text-sm">منطقه خطر</h4>
-          <form action={logout}>
+          <form action={signOut}>
               <Button variant="outline" className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 gap-2">
                   <LogOut className="h-4 w-4" />
                   خروج از حساب کاربری
