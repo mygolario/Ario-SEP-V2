@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
 
+import { User } from '@supabase/supabase-js';
+
 interface LayoutShellProps {
   children: React.ReactNode;
-  user: any;
+  user: User | null;
 }
 
 export function LayoutShell({ children, user }: LayoutShellProps) {

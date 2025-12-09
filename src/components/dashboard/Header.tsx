@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { 
   Menu, 
   ChevronDown, 
-  User, 
+  User as UserIcon, 
   Settings, 
   LogOut,
   Bell
@@ -15,9 +15,11 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/app/auth/actions';
 
+import { User } from '@supabase/supabase-js';
+
 interface HeaderProps {
   onMenuClick: () => void;
-  user: any; // Using any for simplicity as User type might need import from Supabase
+  user: User | null;
 }
 
 export function Header({ onMenuClick, user }: HeaderProps) {
@@ -128,7 +130,7 @@ export function Header({ onMenuClick, user }: HeaderProps) {
                     href="/dashboard/profile" 
                     className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                   >
-                    <User className="h-4 w-4" />
+                    <UserIcon className="h-4 w-4" />
                     پروفایل
                   </Link>
                   <Link 
