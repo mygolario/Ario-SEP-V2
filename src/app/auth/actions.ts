@@ -51,3 +51,27 @@ export async function signup(formData: FormData) {
 
   return redirect('/dashboard')
 }
+
+export async function updateProfile(formData: FormData) {
+  const supabase = createClient()
+  
+  const full_name = String(formData.get('full_name')).trim()
+
+  const { error } = await supabase.auth.updateUser({
+    data: { full_name }
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  // Revalidate might be needed if we display this data elsewhere 
+  // (though Supabase auth session usually updates on refresh or manual reload)
+  return { success: true }
+}
+
+export async function logout() {
+  const supabase = createClient()
+  await supabase.auth.signOut()
+  return redirect('/login')
+}
