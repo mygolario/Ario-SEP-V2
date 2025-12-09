@@ -20,7 +20,7 @@ export async function login(formData: FormData) {
 
   if (error) {
     console.error("LOGIN ERROR ->", error.message)
-    return redirect('/login?error=Invalid login credentials')
+    return redirect('/login?error=' + error.message)
   }
 
   return redirect('/dashboard')
@@ -36,7 +36,7 @@ export async function signup(formData: FormData) {
 
   console.log("SIGNUP DEBUG -> Email:", email)
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -47,6 +47,11 @@ export async function signup(formData: FormData) {
   if (error) {
     console.error("SIGNUP ERROR ->", error.message)
     return redirect('/signup?error=' + error.message)
+  }
+
+  // If email confirmation is required, session will be null
+  if (!data.session) {
+    return redirect('/login?message=Please check your email to confirm your account')
   }
 
   return redirect('/dashboard')

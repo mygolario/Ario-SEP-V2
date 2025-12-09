@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Eye, EyeOff, Lock } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, Lock, CheckCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -27,6 +27,7 @@ function SubmitButton() {
 export function LoginForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+  const message = searchParams.get('message');
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -39,12 +40,28 @@ export function LoginForm() {
       <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
         <form action={login} className="space-y-5">
           
-          {error === 'InvalidCredentials' && (
+          {message && (
+             <Alert className="bg-emerald-50 border-emerald-200 text-emerald-800">
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle className="mr-2">ایمیل خود را بررسی کنید</AlertTitle>
+              <AlertDescription className="mr-2">
+                {message === 'Please check your email to confirm your account' 
+                  ? 'لینک تایید به ایمیل شما ارسال شد. لطفا حساب خود را تایید کنید.' 
+                  : message}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
             <Alert variant="destructive" className="bg-rose-50 border-rose-200 text-rose-800">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle className="mr-2">خطا در ورود</AlertTitle>
               <AlertDescription className="mr-2">
-                اطلاعات ورود نادرست است. لطفا دوباره تلاش کنید.
+                {error === 'Invalid login credentials' 
+                  ? 'اطلاعات ورود نادرست است.'
+                  : error === 'Email not confirmed'
+                  ? 'ایمیل شما هنوز تایید نشده است. لطفا صندوق ورودی ایمیل خود را بررسی کنید.'
+                  : error}
               </AlertDescription>
             </Alert>
           )}
