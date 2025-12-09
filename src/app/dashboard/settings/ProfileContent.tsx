@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { updateProfile, signOut } from '@/app/auth/actions';
+import { updateProfile, signOut } from '../../auth/actions';
 import { LogOut, Save, User as UserIcon, Loader2 } from 'lucide-react';
 import { useTransition } from 'react';
 
