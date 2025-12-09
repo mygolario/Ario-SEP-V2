@@ -13,14 +13,27 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { signOut } from '@/app/auth/actions';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  user: any; // Using any for simplicity as User type might need import from Supabase
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, user }: HeaderProps) {
   const pathname = usePathname();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Extract initials
+  const fullName = user?.user_metadata?.full_name || 'کاربر';
+  const initials = fullName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const email = user?.email || '';
 
   // Generate Breadcrumbs from pathname
   // e.g., /dashboard/settings -> داشبورد / تنظیمات
@@ -92,7 +105,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
           >
             <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
-              AS
+              {initials}
             </div>
             <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", isProfileOpen && "rotate-180")} />
           </button>
@@ -106,8 +119,8 @@ export function Header({ onMenuClick }: HeaderProps) {
               />
               <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-4 py-3 border-b border-slate-50">
-                  <p className="text-sm font-medium text-slate-900">آریو استودیو</p>
-                  <p className="text-xs text-slate-500 truncate">admin@ariostudio.com</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{fullName}</p>
+                  <p className="text-xs text-slate-500 truncate">{email}</p>
                 </div>
                 
                 <div className="p-1">
@@ -125,13 +138,15 @@ export function Header({ onMenuClick }: HeaderProps) {
                     <Settings className="h-4 w-4" />
                     تنظیمات
                   </Link>
-                  <button 
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    onClick={() => console.log('Logout')}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    خروج
-                  </button>
+                  <form action={signOut}>
+                    <button 
+                      type="submit"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      خروج
+                    </button>
+                  </form>
                 </div>
               </div>
             </>
