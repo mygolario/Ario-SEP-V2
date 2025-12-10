@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { LayoutShell } from '@/components/dashboard/LayoutShell';
+import SentryTest from '@/components/debug/SentryTest';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -17,6 +18,7 @@ export default async function DashboardLayout({
   return (
     <LayoutShell user={user}>
       {children}
+      <SentryTest />
     </LayoutShell>
   );
 }
