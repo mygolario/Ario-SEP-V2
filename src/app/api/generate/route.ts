@@ -126,7 +126,7 @@ export async function POST(req: Request) {
     const { idea, stage, budget } = body;
 
     const completion = await openai.chat.completions.create({
-      model: "anthropic/claude-opus-4.5",
+      model: "anthropic/claude-3.5-sonnet",
       messages: [
         { role: "system", content: systemPrompt },
         { 
@@ -134,7 +134,6 @@ export async function POST(req: Request) {
           content: `Startup Idea: ${idea}\nCurrent Stage: ${stage}\nBudget: ${budget}\n\nGenerate the complete JSON business plan.` 
         }
       ],
-      response_format: { type: "json_object" }
     });
 
     const content = completion.choices[0].message.content;
@@ -166,7 +165,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Error generating plan:', error);
     return NextResponse.json(
-      { error: 'Failed to generate plan' },
+      { error: `Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }
