@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 

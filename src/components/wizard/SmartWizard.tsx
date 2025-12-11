@@ -88,6 +88,7 @@ export function SmartWizard() {
             }
 
             await response.json();
+            router.refresh();
             router.push('/dashboard');
 
         } catch (error) {
