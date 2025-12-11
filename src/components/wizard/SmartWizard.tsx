@@ -7,13 +7,26 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, ArrowLeft, Loader2, Sparkles, User, Briefcase, Home, Gamepad2, Coins } from 'lucide-react';
+import { 
+    ArrowRight, 
+    ArrowLeft, 
+    Sparkles, 
+    GraduationCap, 
+    Briefcase, 
+    Users, 
+    Gamepad2, 
+    Laptop, 
+    Utensils, 
+    Glasses, 
+    Dumbbell 
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Data types
 type StepData = {
     idea: string;
-    audience: string[]; // Changed to array for multiple selection
+    audience: string[]; 
+    customAudience: string;
     budget: number;
     vibe: string;
 };
@@ -25,17 +38,59 @@ const STEPS = [
 ];
 
 const AUDIENCE_OPTIONS = [
-    { id: 'students', label: 'دانشجویان', icon: <User className="w-6 h-6" /> },
-    { id: 'business', label: 'صاحبان کسب‌وکار', icon: <Briefcase className="w-6 h-6" /> },
-    { id: 'families', label: 'خانواده‌ها', icon: <Home className="w-6 h-6" /> },
+    { id: 'students', label: 'دانشجویان', icon: <GraduationCap className="w-6 h-6" /> },
+    { id: 'business', label: 'کسب‌وکارهای B2B', icon: <Briefcase className="w-6 h-6" /> },
+    { id: 'families', label: 'خانواده‌ها', icon: <Users className="w-6 h-6" /> },
     { id: 'gamers', label: 'گیمرها', icon: <Gamepad2 className="w-6 h-6" /> },
+    { id: 'tech', label: 'علاقه‌مندان تکنولوژی', icon: <Laptop className="w-6 h-6" /> },
+    { id: 'housewives', label: 'خانه‌داران', icon: <Utensils className="w-6 h-6" /> },
+    { id: 'seniors', label: 'سالمندان', icon: <Glasses className="w-6 h-6" /> },
+    { id: 'athletes', label: 'ورزشکاران', icon: <Dumbbell className="w-6 h-6" /> },
 ];
 
 const VIBE_OPTIONS = [
-    { id: 'minimal', label: 'مینیمال (Clean/White)', color: 'bg-slate-50 border-slate-200' },
-    { id: 'luxury', label: 'لوکس (Black/Gold)', color: 'bg-slate-900 border-amber-500 text-white' },
-    { id: 'friendly', label: 'دوستانه (Yellow/Blue)', color: 'bg-yellow-50 border-blue-400' },
-    { id: 'tech', label: 'تکنولوژی (Dark/Neon)', color: 'bg-slate-950 border-indigo-500 text-indigo-50' },
+    { 
+        id: 'minimal', 
+        label: 'مینیمال و ساده', 
+        description: 'سفید، خاکستری، مشکی',
+        colors: ['bg-white border-2 border-slate-200', 'bg-slate-200', 'bg-slate-900'],
+        container: 'bg-white border-slate-200 text-slate-900'
+    },
+    { 
+        id: 'luxury', 
+        label: 'لوکس و سنگین', 
+        description: 'مشکی، طلایی، سربی',
+        colors: ['bg-slate-950 border-2 border-slate-800', 'bg-amber-500', 'bg-slate-700'],
+        container: 'bg-slate-900 border-amber-500/50 text-white'
+    },
+    { 
+        id: 'friendly', 
+        label: 'صمیمی و دوستانه', 
+        description: 'زرد، آبی، سفید',
+        colors: ['bg-yellow-400', 'bg-blue-500', 'bg-white border-2 border-blue-100'],
+        container: 'bg-yellow-50 border-blue-200 text-slate-900'
+    },
+    { 
+        id: 'corporate', 
+        label: 'رسمی و شرکتی', 
+        description: 'سرمه‌ای، سفید، خاکستری',
+        colors: ['bg-indigo-900', 'bg-white border-2 border-slate-200', 'bg-slate-400'],
+        container: 'bg-indigo-50 border-indigo-200 text-indigo-900'
+    },
+    { 
+        id: 'energetic', 
+        label: 'پرانرژی و جوان', 
+        description: 'قرمز، نارنجی، سفید',
+        colors: ['bg-red-500', 'bg-orange-500', 'bg-white border-2 border-red-100'],
+        container: 'bg-orange-50 border-red-200 text-red-900'
+    },
+    { 
+        id: 'eco', 
+        label: 'طبیعی و ارگانیک', 
+        description: 'سبز، کرم، قهوه‌ای',
+        colors: ['bg-green-600', 'bg-[#F5F5DC] border-2 border-green-100', 'bg-[#8B4513]'],
+        container: 'bg-green-50 border-green-200 text-green-900'
+    },
 ];
 
 export function SmartWizard() {
@@ -45,7 +100,8 @@ export function SmartWizard() {
     const [data, setData] = useState<StepData>({
         idea: '',
         audience: [],
-        budget: 50, // Default 50M
+        customAudience: '',
+        budget: 50,
         vibe: ''
     });
 
@@ -64,13 +120,21 @@ export function SmartWizard() {
     const handleSubmit = async () => {
         setIsGenerating(true);
         try {
-            // Mapping data to the API expectation (updating existing endpoint structure if needed)
+            // Combine selected audiences with custom input
+            const selectedLabels = data.audience
+                .map(id => AUDIENCE_OPTIONS.find(opt => opt.id === id)?.label)
+                .filter(Boolean);
+            
+            if (data.customAudience.trim()) {
+                selectedLabels.push(data.customAudience.trim());
+            }
+
             const payload = {
                 idea: data.idea,
-                audience: data.audience.join(', '),
+                audience: selectedLabels.join(', '),
                 budget: `${data.budget} Million Tomans`,
                 vibe: data.vibe,
-                goal: 'Startup Launch' // Default goal
+                goal: 'Startup Launch'
             };
 
             const response = await fetch('/api/generate', {
@@ -88,7 +152,7 @@ export function SmartWizard() {
             }
 
             await response.json();
-            router.refresh();
+            router.refresh(); // Refresh data 
             router.push('/dashboard');
 
         } catch (error) {
@@ -111,7 +175,7 @@ export function SmartWizard() {
     }
 
     return (
-        <div className="w-full max-w-3xl mx-auto p-4 md:p-8" dir="rtl">
+        <div className="w-full max-w-4xl mx-auto p-4 md:p-8" dir="rtl">
             {/* Progress Bar */}
             <div className="mb-8">
                 <div className="flex justify-between text-sm font-medium text-slate-500 mb-2 px-1">
@@ -181,8 +245,8 @@ export function SmartWizard() {
                                 className="space-y-8"
                             >
                                 <div className="space-y-4">
-                                    <Label className="text-lg block">مشتریان اصلی شما چه کسانی هستند؟</Label>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <Label className="text-lg block">مشتریان خود را انتخاب کنید (چند مورد)</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         {AUDIENCE_OPTIONS.map((opt) => (
                                             <button
                                                 key={opt.id}
@@ -192,19 +256,27 @@ export function SmartWizard() {
                                                         : [...data.audience, opt.id];
                                                     setData({ ...data, audience: newAudience });
                                                 }}
-                                                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 h-32
+                                                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 h-28
                                                     ${data.audience.includes(opt.id) 
-                                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700' 
-                                                        : 'border-slate-100 bg-white hover:border-slate-200 text-slate-600'}`}
+                                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-inner' 
+                                                        : 'border-slate-100 bg-white hover:border-slate-200 text-slate-600 hover:shadow-sm'}`}
                                             >
                                                 {opt.icon}
-                                                <span className="font-medium">{opt.label}</span>
+                                                <span className="font-medium text-sm text-center">{opt.label}</span>
                                             </button>
                                         ))}
                                     </div>
+                                    <div className="relative">
+                                        <Input 
+                                            placeholder="یا گروه دیگری را بنویسید..."
+                                            value={data.customAudience}
+                                            onChange={(e) => setData({ ...data, customAudience: e.target.value })}
+                                            className="pr-4 border-slate-200 focus-visible:ring-indigo-500"
+                                        />
+                                    </div>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-4 pt-4 border-t border-slate-100">
                                     <div className="flex justify-between">
                                         <Label className="text-lg">بودجه تقریبی اولیه</Label>
                                         <span className="font-bold text-indigo-600">{data.budget} میلیون تومان</span>
@@ -237,25 +309,34 @@ export function SmartWizard() {
                             >
                                 <div className="space-y-4">
                                     <Label className="text-lg block">شخصیت و ظاهر برند شما</Label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {VIBE_OPTIONS.map((opt) => (
                                             <button
                                                 key={opt.id}
                                                 onClick={() => setData({ ...data, vibe: opt.id })}
-                                                className={`p-6 rounded-xl border-2 text-right transition-all
-                                                    ${data.vibe === opt.id ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}
-                                                    ${opt.color}
+                                                className={`p-5 rounded-2xl border-2 text-right transition-all relative overflow-hidden group
+                                                    ${data.vibe === opt.id 
+                                                        ? 'ring-2 ring-indigo-500 ring-offset-2 scale-[1.02] shadow-lg' 
+                                                        : 'hover:scale-[1.01] hover:shadow-md'}
+                                                    ${opt.container}
                                                 `}
                                             >
-                                                <div className="font-bold text-lg mb-1">{opt.label.split('(')[0]}</div>
-                                                <div className="text-xs opacity-70 font-sans">{opt.label.split('(')[1]?.replace(')', '')}</div>
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="font-bold text-lg">{opt.label}</div>
+                                                    {data.vibe === opt.id && <div className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full">انتخاب شد</div>}
+                                                </div>
+                                                
+                                                {/* Color Palette Preview */}
+                                                <div className="flex gap-2 mb-2">
+                                                    {opt.colors.map((colorClass, i) => (
+                                                        <div key={i} className={`w-6 h-6 rounded-full shadow-sm ${colorClass}`}></div>
+                                                    ))}
+                                                </div>
+                                                
+                                                <div className="text-xs opacity-70 font-sans mt-2">{opt.description}</div>
                                             </button>
                                         ))}
                                     </div>
-                                </div>
-                                <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-indigo-800 text-sm">
-                                    <h4 className="font-bold mb-1">جالب است بدانید:</h4>
-                                    انتخاب هویت بصری مناسب می‌تواند اعتماد مشتریان را تا ۴۰٪ افزایش دهد. هوش مصنوعی بر اساس انتخاب شما، پالت رنگی و استایل پیشنهادی را تولید می‌کند.
                                 </div>
                             </motion.div>
                         )}
@@ -276,7 +357,7 @@ export function SmartWizard() {
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-6 h-auto text-lg rounded-xl shadow-lg shadow-indigo-200"
                         disabled={
                             (step === 1 && data.idea.length < 5) || 
-                            (step === 2 && data.audience.length === 0) ||
+                            (step === 2 && data.audience.length === 0 && !data.customAudience) ||
                             (step === 3 && !data.vibe)
                         }
                     >
