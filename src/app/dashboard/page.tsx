@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import DashboardClient from '@/components/dashboard/DashboardClient';
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'Manage your startup empire',
+};
 
 export default async function DashboardPage({
   searchParams,
