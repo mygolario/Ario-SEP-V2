@@ -2,7 +2,7 @@ import { ProfessionalAuthLayout } from '@/components/auth/ProfessionalAuthLayout
 import { AuthInput, SubmitButton } from '@/components/auth/AuthComponents';
 import { signup } from '@/app/auth/actions';
 import Link from 'next/link';
-import { PasswordStrength } from '@/components/auth/PasswordStrengthClient';
+import { PasswordStrength } from '../../components/auth/PasswordStrengthClient';
 
 export default function SignupPage({ searchParams }: { searchParams: { error?: string } }) {
   return (

@@ -24,7 +24,7 @@ export function PasswordStrength() {
     
     return (
         <div className="mt-2 text-xs text-slate-400 text-right dir-rtl flex justify-between px-1">
-             <span>حداقل ۸ کاراکتر</span>
+             <span className="text-slate-500">حداقل ۸ کاراکتر</span>
              {/* 
                Future: Logic to change color based on length. 
                Requires the input above to be controlled. 
