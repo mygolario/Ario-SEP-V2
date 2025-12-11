@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { LayoutShell } from '@/components/dashboard/LayoutShell';
+import { TourGuide } from '@/components/dashboard/TourGuide';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -16,6 +17,7 @@ export default async function DashboardLayout({
 
   return (
     <LayoutShell user={user}>
+      <TourGuide />
       {children}
     </LayoutShell>
   );

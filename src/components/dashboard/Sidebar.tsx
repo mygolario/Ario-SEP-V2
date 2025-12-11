@@ -107,6 +107,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
 
       {/* Sidebar */}
       <aside 
+        id="sidebar-container"
         className={cn(
           "bg-white border-l border-slate-200 flex flex-col h-full shrink-0",
           "md:w-64 md:flex md:relative md:translate-x-0", // Desktop: Fixed width, visible
@@ -139,6 +140,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             return (
               <Link
                 key={item.href}
+                id={`nav-item-${item.href.split('/').pop()}`}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-medium",
