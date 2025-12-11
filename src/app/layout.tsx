@@ -4,7 +4,7 @@ import { Vazirmatn } from "next/font/google";
 import { PHProvider } from "./providers";
 import "./globals.css";
 
-const vazirmatn = Vazirmatn({ subsets: ["arabic", "latin"] });
+const vazir = Vazirmatn({ subsets: ["arabic"], variable: "--font-vazir" });
 
 export const metadata: Metadata = {
   title: {
@@ -46,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body className={vazirmatn.className}>
+      <body className={vazir.className} dir="rtl">
         <PHProvider>
           {children}
         </PHProvider>

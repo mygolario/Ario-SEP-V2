@@ -8,8 +8,6 @@
   }
 }
 
-
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -66,13 +64,25 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    text-align: right;
+    direction: rtl;
+  }
+  input,
+  textarea {
+    text-align: right;
+    direction: rtl;
+  }
+  /* Force LTR for email/password/numbers */
+  input[type="email"],
+  input[type="password"],
+  .ltr {
+    direction: ltr;
+    text-align: left;
   }
 }
