@@ -126,7 +126,7 @@ export async function POST(req: Request) {
     const { idea, stage, budget } = body;
 
     const completion = await openai.chat.completions.create({
-      model: "google/gemini-3-pro-preview",
+      model: "anthropic/claude-opus-4.5",
       messages: [
         { role: "system", content: systemPrompt },
         { 
