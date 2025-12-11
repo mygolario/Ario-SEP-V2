@@ -1,78 +1,79 @@
-import AuthLayout from '@/components/auth/AuthLayout';
+import { ProfessionalAuthLayout } from '@/components/auth/ProfessionalAuthLayout';
+import { AuthInput, SubmitButton } from '@/components/auth/AuthComponents';
 import { signup } from '@/app/auth/actions';
 import Link from 'next/link';
+import { PasswordStrength } from '@/components/auth/PasswordStrengthClient';
 
 export default function SignupPage({ searchParams }: { searchParams: { error?: string } }) {
   return (
-    <AuthLayout>
+    <ProfessionalAuthLayout>
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-slate-900">ساخت حساب جدید</h2>
-        <p className="text-slate-600 mt-2">برای شروع رایگان ثبت نام کنید</p>
+        <h2 className="text-3xl font-bold text-slate-900 mb-2">شروع رایگان 🚀</h2>
+        <p className="text-slate-500">کسب‌وکارتان را همین امروز بسازید</p>
       </div>
 
       {searchParams.error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-6 border border-red-200 text-right dir-rtl">
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 text-right dir-rtl flex items-center">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
           {searchParams.error}
         </div>
       )}
 
-      <form action={signup} className="space-y-6 text-right" dir="rtl">
-        <div>
-          <label htmlFor="full_name" className="block text-sm font-medium text-slate-700 mb-2">
-            نام و نام خانوادگی
-          </label>
-          <input
-            id="full_name"
-            name="full_name"
-            type="text"
-            required
-            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none"
-            placeholder="علی علوی"
-          />
+      <form action={signup} className="space-y-5 text-right" dir="rtl">
+        <AuthInput 
+            id="full_name" 
+            name="full_name" 
+            type="text" 
+            label="نام و نام خانوادگی" 
+            required 
+            placeholder="مثال: علی محمدی"
+        />
+
+        <AuthInput 
+            id="email" 
+            name="email" 
+            type="email" 
+            label="ایمیل" 
+            required 
+            className="ltr text-left"
+        />
+
+        <div className="relative">
+            <AuthInput 
+                id="password" 
+                name="password" 
+                type="password" 
+                label="رمز عبور" 
+                required 
+                className="ltr text-left"
+            />
+            {/* Password Strength Indicator can be added here if we want client interactivity, 
+                but cleaner to keep it simple or use a client component wrapper for just this input */}
+            <PasswordStrength /> 
         </div>
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-            ایمیل
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none"
-            placeholder="example@mail.com"
-          />
+        <SubmitButton>
+          ساخت حساب کاربری
+        </SubmitButton>
+
+        <div className="text-center text-sm text-slate-500 mt-6 relative">
+             <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-slate-500">یا</span>
+            </div>
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-            رمز عبور
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none"
-            placeholder="••••••••"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors duration-200"
-        >
-          ثبت نام
-        </button>
-
-        <div className="text-center text-sm text-slate-600 mt-4">
-          حساب دارید؟{' '}
-          <Link href="/login" className="text-indigo-600 hover:text-indigo-500 font-semibold">
-            ورود
+        <div className="text-center">
+            <div className="text-slate-600 mb-2">قبلاً ثبت‌نام کرده‌اید؟</div>
+            <Link href="/login" className="text-indigo-600 hover:text-indigo-500 font-bold hover:underline">
+            ورود به حساب
           </Link>
         </div>
       </form>
-    </AuthLayout>
+    </ProfessionalAuthLayout>
   );
 }
