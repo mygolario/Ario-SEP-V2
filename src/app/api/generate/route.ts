@@ -22,6 +22,7 @@ const generationInputSchema = z.object({
   vibe: z.string().min(1, 'vibe is required'),
   budget: z.string().min(1, 'budget is required'),
   goal: z.string().min(1, 'goal is required'),
+  projectId: z.string().uuid().optional(),
 });
 
 const systemPrompt = `
@@ -120,7 +121,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { idea, audience, vibe, budget, goal } = parsedBody.data;
+    const { idea, audience, vibe, budget, goal, projectId } = parsedBody.data;
 
     const completion = await openai.chat.completions.create({
       model,
@@ -183,27 +184,51 @@ export async function POST(req: Request) {
 
     const sanitizedPlan = sanitizePlan(parsedPlan);
 
-    // Create project
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .insert({
-        user_id: user.id,
-        title: idea?.slice(0, 80) || 'پروژه جدید',
-        inputs: parsedBody.data,
-      })
-      .select('id')
-      .single();
+    // Use existing project if provided, otherwise create a new one
+    let projectIdToUse: string;
 
-    if (projectError || !project) {
-      console.error('Database Error (project):', projectError);
-      return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+    if (projectId) {
+      const { data: existingProject, error: projectLookupError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('id', projectId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (projectLookupError) {
+        console.error('Database Error (project lookup):', projectLookupError);
+        return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+      }
+
+      if (!existingProject) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+
+      projectIdToUse = existingProject.id;
+    } else {
+      const { data: newProject, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          title: idea?.slice(0, 80) || 'پروژه جدید',
+          inputs: parsedBody.data,
+        })
+        .select('id')
+        .single();
+
+      if (projectError || !newProject) {
+        console.error('Database Error (project):', projectError);
+        return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+      }
+
+      projectIdToUse = newProject.id;
     }
 
     // Determine next version
     const { data: latestVersion, error: versionLookupError } = await supabase
       .from('project_versions')
       .select('version')
-      .eq('project_id', project.id)
+      .eq('project_id', projectIdToUse)
       .order('version', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -218,7 +243,7 @@ export async function POST(req: Request) {
     const { data: versionRow, error: versionInsertError } = await supabase
       .from('project_versions')
       .insert({
-        project_id: project.id,
+        project_id: projectIdToUse,
         version: nextVersion,
         status: 'generating',
         model,
@@ -284,7 +309,11 @@ export async function POST(req: Request) {
 
     await supabase.from('project_versions').update({ status: 'done' }).eq('id', versionRow.id);
 
-    return NextResponse.json({ ...sanitizedPlan, projectId: project.id, versionId: versionRow.id });
+    return NextResponse.json({
+      ...sanitizedPlan,
+      projectId: projectIdToUse,
+      versionId: versionRow.id,
+    });
   } catch (error) {
     console.error('Error generating plan:', error);
     return NextResponse.json(
