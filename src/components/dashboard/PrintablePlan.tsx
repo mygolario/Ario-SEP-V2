@@ -2,10 +2,12 @@
 
 import React, { forwardRef } from 'react';
 
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 
 export const PrintablePlan = forwardRef<HTMLDivElement, { data: BusinessPlanV1 }>(
   ({ data }, ref) => {
+    const safeLogo = sanitizeLogoSvg(data.logoSVG);
     return (
       <div
         ref={ref}
@@ -21,8 +23,8 @@ export const PrintablePlan = forwardRef<HTMLDivElement, { data: BusinessPlanV1 }
               <h1 className="text-4xl font-extrabold mb-2">{data.businessName}</h1>
               <p className="text-xl text-slate-600 font-medium">{data.tagline}</p>
             </div>
-            {data.logoSVG && (
-              <div className="w-24 h-24" dangerouslySetInnerHTML={{ __html: data.logoSVG }} />
+            {safeLogo && (
+              <div className="w-24 h-24" dangerouslySetInnerHTML={{ __html: safeLogo }} />
             )}
           </header>
 

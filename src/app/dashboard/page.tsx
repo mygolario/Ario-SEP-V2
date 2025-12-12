@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import DashboardClient from '@/components/dashboard/DashboardClient';
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import { createClient } from '@/utils/supabase/server';
@@ -32,7 +33,10 @@ export default async function DashboardPage({
     if (project) {
       const parsedProject = BusinessPlanV1Schema.safeParse(project.business_data);
       if (parsedProject.success) {
-        projectData = parsedProject.data;
+        projectData = {
+          ...parsedProject.data,
+          logoSVG: sanitizeLogoSvg(parsedProject.data.logoSVG),
+        };
       }
     }
   }
@@ -49,7 +53,10 @@ export default async function DashboardPage({
     if (projects && projects.length > 0) {
       const parsedProject = BusinessPlanV1Schema.safeParse(projects[0].business_data);
       if (parsedProject.success) {
-        projectData = parsedProject.data;
+        projectData = {
+          ...parsedProject.data,
+          logoSVG: sanitizeLogoSvg(parsedProject.data.logoSVG),
+        };
       }
     }
   }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 
 import { WebsiteBuilder } from '@/components/dashboard/WebsiteBuilder';
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,9 @@ export default async function WebsitePage() {
 
   const project = projects?.[0]?.business_data;
   const parsedProject = project ? BusinessPlanV1Schema.safeParse(project) : null;
-  const businessPlan: BusinessPlanV1 | null = parsedProject?.success ? parsedProject.data : null;
+  const businessPlan: BusinessPlanV1 | null = parsedProject?.success
+    ? { ...parsedProject.data, logoSVG: sanitizeLogoSvg(parsedProject.data.logoSVG) }
+    : null;
   const hasContent = businessPlan?.landingPageCopy?.headline;
 
   if (!businessPlan || !hasContent) {
