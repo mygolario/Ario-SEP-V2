@@ -3,6 +3,7 @@ import type {
   LandingPageCopy as LandingPageCopyType,
   LandingPageFeature as LandingPageFeatureType,
   LeanCanvas as LeanCanvasType,
+  OnePagePlan as OnePagePlanType,
   RoadmapItem as RoadmapItemType,
   Testimonial as TestimonialType,
 } from '@/lib/validators/businessPlan';
@@ -13,6 +14,7 @@ export type LandingPageFeature = LandingPageFeatureType;
 export type Testimonial = TestimonialType;
 export type LeanCanvas = LeanCanvasType;
 export type RoadmapItem = RoadmapItemType;
+export type OnePagePlan = OnePagePlanType;
 export type LandingPageFooter = NonNullable<LandingPageCopy['footer']>;
 
 export interface GenerationRequestPayload {
