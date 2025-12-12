@@ -34,7 +34,17 @@ export function assemblePlan(sections: SectionRecord[]): BusinessPlanV1 {
   const merged: Partial<SectionContentMap> = {};
 
   sections.forEach(({ section_key, content }) => {
-    merged[section_key] = content as SectionContentMap[SectionKey];
+    if (section_key === 'identity') {
+      merged.identity = content as SectionContentMap['identity'];
+    } else if (section_key === 'branding') {
+      merged.branding = content as SectionContentMap['branding'];
+    } else if (section_key === 'landing') {
+      merged.landing = content as SectionContentMap['landing'];
+    } else if (section_key === 'lean_canvas') {
+      merged.lean_canvas = content as SectionContentMap['lean_canvas'];
+    } else if (section_key === 'roadmap') {
+      merged.roadmap = content as SectionContentMap['roadmap'];
+    }
   });
 
   const planCandidate = {
