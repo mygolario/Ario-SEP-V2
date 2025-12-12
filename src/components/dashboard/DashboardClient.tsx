@@ -20,22 +20,31 @@ import { PrintablePlan } from '@/components/dashboard/PrintablePlan';
 import { WebsitePreview } from '@/components/dashboard/WebsitePreview';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 
 interface DashboardClientProps {
   initialData: BusinessPlanV1 | null;
   projectId?: string;
+  versionId?: string;
 }
 
 export default function DashboardClient({
   initialData,
   projectId: initialProjectId,
+  versionId: initialVersionId,
 }: DashboardClientProps) {
   const [data, setData] = useState<BusinessPlanV1 | null>(initialData);
   const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
+  const [versionId, setVersionId] = useState<string | undefined>(initialVersionId);
   const [regeneratingOnePagePlan, setRegeneratingOnePagePlan] = useState(false);
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
   const safeLogo = sanitizeLogoSvg(data?.logoSVG);
 
   const componentRef = useRef<HTMLDivElement>(null);
@@ -69,16 +78,60 @@ export default function DashboardClient({
         throw new Error((json as { error?: string })?.error || 'Failed to regenerate');
       }
 
-      const { projectId: returnedProjectId, ...plan } = (json || {}) as Record<string, unknown>;
-      delete (plan as { versionId?: unknown }).versionId;
+      const {
+        projectId: returnedProjectId,
+        versionId: returnedVersionId,
+        ...plan
+      } = (json || {}) as Record<string, unknown>;
 
       setProjectId(typeof returnedProjectId === 'string' ? returnedProjectId : projectId);
+      setVersionId(typeof returnedVersionId === 'string' ? returnedVersionId : versionId);
       setData(plan as BusinessPlanV1);
     } catch (error) {
       console.error('Regenerate one-page plan failed:', error);
       setRegenerateError(error instanceof Error ? error.message : 'Failed to regenerate');
     } finally {
       setRegeneratingOnePagePlan(false);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackMessage.trim()) {
+      setFeedbackError('متن بازخورد را وارد کنید.');
+      return;
+    }
+
+    setFeedbackSubmitting(true);
+    setFeedbackError(null);
+    setFeedbackSuccess(null);
+
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: feedbackMessage.trim(),
+          projectId,
+          versionId,
+        }),
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error((json as { error?: string })?.error || 'ارسال بازخورد ناموفق بود.');
+      }
+
+      setFeedbackSuccess('بازخورد شما ارسال شد.');
+      setFeedbackMessage('');
+      setFeedbackOpen(false);
+    } catch (error) {
+      console.error('Submit feedback failed:', error);
+      setFeedbackError(error instanceof Error ? error.message : 'ارسال بازخورد ناموفق بود.');
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -124,12 +177,25 @@ export default function DashboardClient({
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex justify-between items-center flex-wrap gap-4">
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-slate-400">داشبورد مدیریتی</h1>
+            <h1 className="text-2xl font-bold text-slate-400">Ø¯Ø§Ø´Ø¨ÙØ±Ø¯ Ù Ø¯ÛØ±ÛØªÛ</h1>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                setFeedbackError(null);
+                setFeedbackSuccess(null);
+                setFeedbackOpen(true);
+              }}
+            >
+              <FileText className="w-4 h-4" />
+              Ø§Ø±Ø³Ø§Ù Ø¨Ø§Ø²Ø®ÙØ±Ø¯
+            </Button>
             <Link href="/start">
               <Button variant="outline" size="sm">
-                پروژه جدید
+                Ù¾Ø±ÙÚÙ Ø¬Ø¯ÛØ¯
               </Button>
             </Link>
             <Button
@@ -139,10 +205,13 @@ export default function DashboardClient({
               className="gap-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900"
             >
               <Download className="w-4 h-4" />
-              دانلود طرح (PDF)
+              Ø¯Ø§ÙÙÙØ¯ Ø·Ø±Ø­ (PDF)
             </Button>
           </div>
         </div>
+        {feedbackSuccess && (
+          <p className="text-sm text-green-600 dark:text-green-400">{feedbackSuccess}</p>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card A: Identity (Spans 2 cols) */}
@@ -238,7 +307,7 @@ export default function DashboardClient({
                 disabled={regeneratingOnePagePlan || !projectId}
               >
                 <RefreshCcw className="w-4 h-4" />
-                {data.onePagePlan ? '????? ??????' : '????? One-Page Plan'}
+                {data.onePagePlan ? 'ØªÙÙÛØ¯ Ø¯ÙØ¨Ø§Ø±Ù' : 'ØªÙÙÛØ¯ One-Page Plan'}
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -255,49 +324,52 @@ export default function DashboardClient({
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 grid md:grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-200">
                       <div>
-                        <p className="font-semibold">?????</p>
+                        <p className="font-semibold">ÙØ³Ø§ÙÙ</p>
                         <p className="text-slate-600 dark:text-slate-300">
                           {data.onePagePlan.problem}
                         </p>
                       </div>
                       <div>
-                        <p className="font-semibold">??????</p>
+                        <p className="font-semibold">Ø±Ø§Ù‌Ø­Ù</p>
                         <p className="text-slate-600 dark:text-slate-300">
                           {data.onePagePlan.solution}
                         </p>
                       </div>
                       <div>
-                        <p className="font-semibold">????? ???</p>
+                        <p className="font-semibold">ÙØ´ØªØ±Û ÙØ¯Ù</p>
                         <p className="text-slate-600 dark:text-slate-300">
                           {data.onePagePlan.targetCustomer}
                         </p>
                       </div>
                       <div>
-                        <p className="font-semibold">???? ??????</p>
+                        <p className="font-semibold">Ø§Ø±Ø²Ø´ ÙØªÙØ§ÛØ²</p>
                         <p className="text-slate-600 dark:text-slate-300">
                           {data.onePagePlan.uniqueValue}
                         </p>
                       </div>
                       <div className="md:col-span-2">
-                        <p className="font-semibold">??? ????????</p>
+                        <p className="font-semibold">ÙØ¯Ù Ú©Ø³Ø¨‌ÙÚ©Ø§Ø±</p>
                         <p className="text-slate-600 dark:text-slate-300">
                           {data.onePagePlan.businessModel}
                         </p>
                       </div>
                     </div>
                     <div className="space-y-4">
-                      {renderBullets('?????? ???? ?? ?????', data.onePagePlan.goToMarket)}
-                      {renderBullets('???????? ?????', data.onePagePlan.keyMetrics)}
-                      {renderBullets('???????', data.onePagePlan.risks)}
-                      {renderBullets('? ??? ?????', data.onePagePlan.next7Days)}
+                      {renderBullets(
+                        'Ø¨Ø±ÙØ§ÙÙ ÙØ±ÙØ¯ Ø¨Ù Ø¨Ø§Ø²Ø§Ø±',
+                        data.onePagePlan.goToMarket
+                      )}
+                      {renderBullets('Ø´Ø§Ø®Øµ‌ÙØ§Û Ú©ÙÛØ¯Û', data.onePagePlan.keyMetrics)}
+                      {renderBullets('Ø±ÛØ³Ú©‌ÙØ§', data.onePagePlan.risks)}
+                      {renderBullets('Û· Ø±ÙØ² Ø¢ÛÙØ¯Ù', data.onePagePlan.next7Days)}
                     </div>
                   </div>
                 </>
               ) : (
                 <div className="flex flex-col gap-3 p-4 rounded-lg border border-dashed border-amber-300 dark:border-amber-800 bg-white/60 dark:bg-amber-950/10">
                   <p className="text-slate-700 dark:text-slate-200">
-                    ???? One-Page Plan ???? ??? ????? ???? ?????. ???? ????? ??? ???? ????? ???? ??
-                    ???? ????.
+                    ÙÙÙØ² One-Page Plan Ø¨Ø±Ø§Û Ø§ÛÙ Ù¾Ø±ÙÚÙ ÙØ¬ÙØ¯ ÙØ¯Ø§Ø±Ø¯. Ø¨Ø±Ø§Û ÙÙØ§ÛØ´ Ø§ÛÙ
+                    Ø¨Ø®Ø´Ø ØªÙÙÛØ¯ ÙØ¬Ø¯Ø¯ Ø±Ø§ Ø§Ø¬Ø±Ø§ Ú©ÙÛØ¯.
                   </p>
                   <div className="flex gap-3">
                     <Button
@@ -306,11 +378,11 @@ export default function DashboardClient({
                       disabled={regeneratingOnePagePlan || !projectId}
                     >
                       <RefreshCcw className="w-4 h-4" />
-                      ????? One-Page Plan
+                      ØªÙÙÛØ¯ One-Page Plan
                     </Button>
                     {!projectId && (
                       <span className="text-sm text-slate-500 dark:text-slate-400">
-                        ????? ????? ?? ????? ????.
+                        Ø§Ø¨ØªØ¯Ø§ Ù¾Ø±ÙÚÙ Ø±Ø§ Ø°Ø®ÛØ±Ù Ú©ÙÛØ¯.
                       </span>
                     )}
                   </div>
@@ -389,6 +461,45 @@ export default function DashboardClient({
           )}
         </div>
       </div>
+      {feedbackOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                ارسال بازخورد
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                rows={5}
+                placeholder="نظر یا پیشنهاد خود را بنویسید..."
+                value={feedbackMessage}
+                onChange={(e) => setFeedbackMessage(e.target.value)}
+              />
+              {feedbackError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{feedbackError}</p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setFeedbackOpen(false)}
+                  disabled={feedbackSubmitting}
+                >
+                  انصراف
+                </Button>
+                <Button
+                  onClick={handleSubmitFeedback}
+                  disabled={feedbackSubmitting}
+                  className="gap-2"
+                >
+                  {feedbackSubmitting ? 'در حال ارسال...' : 'ارسال'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
