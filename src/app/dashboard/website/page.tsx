@@ -10,7 +10,11 @@ import type { SectionKey } from '@/types/sections';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
 
-export default async function WebsitePage() {
+export default async function WebsitePage({
+  searchParams,
+}: {
+  searchParams: { projectId?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
@@ -19,15 +23,17 @@ export default async function WebsitePage() {
   if (!user) return null;
 
   let businessPlan: BusinessPlanV1 | null = null;
+  let projectId = searchParams.projectId;
 
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false, nullsFirst: false })
-    .limit(1);
-
-  const projectId = projects?.[0]?.id;
+  if (!projectId) {
+    const { data: projects } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false, nullsFirst: false })
+      .limit(1);
+    projectId = projects?.[0]?.id;
+  }
 
   if (projectId) {
     const { data: latestVersion } = await supabase
@@ -98,7 +104,7 @@ export default async function WebsitePage() {
 
   return (
     <div className="space-y-6 pb-20">
-      <WebsiteBuilder data={businessPlan} />
+      <WebsiteBuilder data={businessPlan} projectId={projectId} />
     </div>
   );
 }
