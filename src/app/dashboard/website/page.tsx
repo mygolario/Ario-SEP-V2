@@ -24,7 +24,7 @@ export default async function WebsitePage() {
     .from('projects')
     .select('id')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
     .limit(1);
 
   const projectId = projects?.[0]?.id;

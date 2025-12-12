@@ -30,7 +30,7 @@ export default async function DashboardPage({
       .from('projects')
       .select('id')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false, nullsFirst: false })
       .limit(1);
 
     if (projects && projects.length > 0) {
