@@ -11,11 +11,6 @@ export const runtime = 'nodejs';
 
 const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-3-pro-preview';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-});
-
 const generationInputSchema = z.object({
   idea: z.string().min(1, 'idea is required'),
   audience: z.string().min(1, 'audience is required'),
@@ -122,6 +117,18 @@ export async function POST(req: Request) {
     }
 
     const { idea, audience, vibe, budget, goal, projectId } = parsedBody.data;
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
+    if (!apiKey) {
+      console.error('OPENROUTER_API_KEY not configured');
+      return NextResponse.json({ error: 'Configuration error: missing API key' }, { status: 500 });
+    }
+
+    const openai = new OpenAI({
+      apiKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+    });
 
     const completion = await openai.chat.completions.create({
       model,
