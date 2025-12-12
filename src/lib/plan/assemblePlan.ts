@@ -1,5 +1,5 @@
-import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
-import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
+import { sanitizeLogoSvg } from '../security/sanitizeSvg';
+import { BusinessPlanV1Schema } from '../validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import type { SectionKey } from '@/types/sections';
 
