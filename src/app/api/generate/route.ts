@@ -128,7 +128,7 @@ export async function POST(req: Request) {
     const { idea, stage, budget } = body;
 
     const completion = await openai.chat.completions.create({
-      model: "anthropic/claude-opus-4.5",
+      model: "anthropic/claude-3.5-sonnet",
       messages: [
         { role: "system", content: systemPrompt },
         { 
@@ -145,7 +145,17 @@ export async function POST(req: Request) {
       throw new Error("No content generated");
     }
 
-    const businessData = JSON.parse(content);
+    // Clean up content to ensure it's valid JSON
+    // Remove markdown code blocks if present
+    const cleanedContent = content.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
+    
+    let businessData;
+    try {
+        businessData = JSON.parse(cleanedContent);
+    } catch (parseError) {
+        console.error("JSON Parse Error:", parseError, "Content:", content);
+        throw new Error("Failed to parse AI response as JSON");
+    }
 
     // Save to Supabase
     const { data: project, error: dbError } = await supabase
