@@ -35,7 +35,7 @@ do $$
 begin
   if not exists (
     select 1 from pg_policies
-    where polname = 'usage_daily_select_own'
+    where policyname = 'usage_daily_select_own'
       and tablename = 'usage_daily'
   ) then
     create policy usage_daily_select_own on public.usage_daily
@@ -62,7 +62,7 @@ do $$
 begin
   if not exists (
     select 1 from pg_policies
-    where polname = 'feedback_insert_own'
+    where policyname = 'feedback_insert_own'
       and tablename = 'feedback'
   ) then
     create policy feedback_insert_own on public.feedback
@@ -72,7 +72,7 @@ begin
 
   if not exists (
     select 1 from pg_policies
-    where polname = 'feedback_select_own'
+    where policyname = 'feedback_select_own'
       and tablename = 'feedback'
   ) then
     create policy feedback_select_own on public.feedback
@@ -96,7 +96,7 @@ do $$
 begin
   if not exists (
     select 1 from pg_policies
-    where polname = 'telemetry_events_insert_auth'
+    where policyname = 'telemetry_events_insert_auth'
       and tablename = 'telemetry_events'
   ) then
     create policy telemetry_events_insert_auth on public.telemetry_events
@@ -106,7 +106,7 @@ begin
 
   if not exists (
     select 1 from pg_policies
-    where polname = 'telemetry_events_select_own'
+    where policyname = 'telemetry_events_select_own'
       and tablename = 'telemetry_events'
   ) then
     create policy telemetry_events_select_own on public.telemetry_events
@@ -116,7 +116,8 @@ begin
 end$$;
 
 -- RPC: check_and_increment_daily
-create or replace function public.check_and_increment_daily(kind text, limit int)
+drop function if exists public.check_and_increment_daily(text, int);
+create or replace function public.check_and_increment_daily(kind text, p_limit int)
 returns table (
   allowed boolean,
   used int,
@@ -129,7 +130,7 @@ as $$
 declare
   v_user uuid := auth.uid();
   v_day date := (now() at time zone 'Asia/Tehran')::date;
-  v_limit int := greatest(coalesce(limit, 0), 0);
+  v_limit int := greatest(coalesce(p_limit, 0), 0);
   v_used int;
 begin
   if v_user is null then
