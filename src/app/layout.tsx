@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import * as Sentry from '@sentry/nextjs';
 import localFont from 'next/font/local';
 import { PHProvider } from './providers';
@@ -14,9 +14,22 @@ const vazirmatn = localFont({
 });
 
 export function generateMetadata(): Metadata {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  let metadataBase: URL | undefined;
+
+  if (siteUrl) {
+    try {
+      metadataBase = new URL(siteUrl);
+    } catch {
+      metadataBase = undefined;
+    }
+  }
+
   return {
-    title: 'بیزینس ساز هوشمند | ساخت کسب و کار با هوش مصنوعی',
-    description: 'ساخت لوگو، استراتژی و وب‌سایت در ۶۰ ثانیه',
+    title: 'آریو | همراه هوشمند برای برنامه‌ریزی کسب‌وکار',
+    description:
+      'آریو نسخه بتای ایرانی برای ساخت برنامه کسب‌وکار، چک‌لیست اقدام و برآورد مالی اولیه با تکیه بر داده‌های بومی و هوش مصنوعی.',
+    metadataBase,
     other: {
       ...Sentry.getTraceData(),
     },
@@ -30,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body className={vazirmatn.className}>
+      <body className={`${vazirmatn.className} antialiased`}>
         <PHProvider>{children}</PHProvider>
       </body>
     </html>
