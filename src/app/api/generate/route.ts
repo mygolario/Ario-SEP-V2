@@ -22,10 +22,9 @@ const generationInputSchema = z.object({
 
 const systemPrompt = `
 You are an expert Startup Consultant & AI Architect specialized in the Iranian market.
-Your task is to generate a concise, production-ready business plan (Farsi-only, RTL-friendly).
+Return the Perfect V1 Pack as a single JSON object only (no markdown or extra prose). All text must be natural Farsi and RTL-friendly.
 
-Output Format: JSON only. No markdown. No intro/outro text.
-Structure (must match exactly):
+Schema:
 {
   "businessName": "Creative modern Farsi name",
   "tagline": "Catchy Farsi slogan",
@@ -37,12 +36,8 @@ Structure (must match exactly):
     "headline": "High-converting H1 in Farsi",
     "subheadline": "Persuasive H2 in Farsi",
     "cta": "Call to action in Farsi",
-    "features": [
-      { "title": "Feature Farsi", "description": "Benefit Farsi", "iconName": "Zap" }
-    ],
-    "testimonials": [
-      { "name": "Name Farsi", "role": "Role Farsi", "quote": "Quote Farsi" }
-    ],
+    "features": [{ "title": "Feature Farsi", "description": "Benefit Farsi", "iconName": "Zap" }],
+    "testimonials": [{ "name": "Name Farsi", "role": "Role Farsi", "quote": "Quote Farsi" }],
     "footer": { "copyrightText": "Copyright text Farsi", "socialLinks": ["Instagram", "LinkedIn"] }
   },
   "leanCanvas": {
@@ -56,28 +51,44 @@ Structure (must match exactly):
     "costStructure": "Farsi cost structure"
   },
   "roadmap": [
-    { "week": "هفته ۱", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] },
-    { "week": "هفته ۲", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] },
-    { "week": "هفته ۳", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] },
-    { "week": "هفته ۴", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] }
-  ]
+    { "week": "Week 1", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] },
+    { "week": "Week 2", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] },
+    { "week": "Week 3", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] },
+    { "week": "Week 4", "focus": "Farsi focus", "tasks": ["Task 1 Farsi", "Task 2 Farsi"] }
+  ],
+  "onePagePlan": {
+    "title": "One-page plan title",
+    "elevatorPitch": "Short convincing paragraph",
+    "problem": "Problem statement",
+    "solution": "Solution summary",
+    "targetCustomer": "Target customer",
+    "uniqueValue": "Unique value proposition",
+    "businessModel": "Business model",
+    "goToMarket": ["Step 1", "Step 2", "Step 3"],
+    "keyMetrics": ["Metric 1", "Metric 2", "Metric 3"],
+    "risks": ["Risk 1", "Risk 2", "Risk 3"],
+    "next7Days": ["Action 1", "Action 2", "Action 3", "Action 4", "Action 5"]
+  }
 }
 
-Guardrails:
-- All strings must be natural Farsi (no transliteration).
-- Keep answers concise and specific to the provided idea, audience, vibe, budget, and goal.
-- colorPalette should use valid hex codes and pair well together.
-- Roadmap tasks must be actionable for an Iran-based founder.
-- Do not add fields outside this structure.
+Rules:
+- Output JSON only. No markdown/code fences/extra commentary.
+- colorPalette must contain 4-6 valid hex colors that pair well.
+- marketingSteps must have exactly 5 items.
+- roadmap must have exactly 4 items with at least one task each.
+- onePagePlan must be present; goToMarket/keyMetrics/risks need >= 3 items; next7Days needs >= 5 items.
+- Keep responses concise and specific to the provided idea, audience, vibe, budget, and goal.
 `;
 
 const repairPrompt = `
-You are a strict JSON repair bot. Fix the provided JSON so it matches the exact BusinessPlanV1 schema described above.
+You are a strict JSON repair bot for the Perfect V1 Pack schema described above.
 Rules:
-- Output JSON only, no prose.
+- Output JSON only, no prose or markdown.
 - Preserve Farsi content.
-- Ensure colorPalette entries are valid hex strings and length 4-6.
-- marketingSteps must be exactly 5 items, roadmap exactly 4 items.
+- Ensure onePagePlan exists and all its fields are present.
+- colorPalette entries are valid hex strings (length 4-6).
+- marketingSteps must be exactly 5 items, roadmap exactly 4 items with at least one task each.
+- goToMarket/keyMetrics/risks must have at least 3 items; next7Days at least 5 items.
 `;
 
 const sanitizePlan = (plan: BusinessPlanV1): BusinessPlanV1 => ({
@@ -92,6 +103,9 @@ const parsePlan = (content: string) => {
     return null;
   }
 };
+
+const ensureOnePagePlan = (plan: BusinessPlanV1 | undefined) =>
+  plan?.onePagePlan ? plan : undefined;
 
 export async function POST(req: Request) {
   try {
@@ -136,7 +150,7 @@ export async function POST(req: Request) {
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: `Idea: ${idea}\nAudience: ${audience}\nVibe: ${vibe}\nBudget: ${budget}\nGoal: ${goal}\n\nGenerate the complete JSON business plan.`,
+          content: `Idea: ${idea}\nAudience: ${audience}\nVibe: ${vibe}\nBudget: ${budget}\nGoal: ${goal}\n\nReturn ONLY the Perfect V1 Pack JSON.`,
         },
       ],
       response_format: { type: 'json_object' },
@@ -145,18 +159,15 @@ export async function POST(req: Request) {
     const content = completion.choices[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json(
-        { error: 'پاسخی از مدل دریافت نشد. لطفاً دوباره تلاش کنید.' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'No content returned from model' }, { status: 500 });
     }
 
     const initialJson = parsePlan(content);
     const initialValidation = initialJson ? BusinessPlanV1Schema.safeParse(initialJson) : null;
 
-    let parsedPlan: BusinessPlanV1 | undefined = initialValidation?.success
-      ? initialValidation.data
-      : undefined;
+    let parsedPlan: BusinessPlanV1 | undefined = ensureOnePagePlan(
+      initialValidation?.success ? initialValidation.data : undefined
+    );
 
     if (!parsedPlan) {
       const repairCompletion = await openai.chat.completions.create({
@@ -176,20 +187,26 @@ export async function POST(req: Request) {
       const repairedJson = repairedContent ? parsePlan(repairedContent) : null;
       const repairedValidation = repairedJson ? BusinessPlanV1Schema.safeParse(repairedJson) : null;
 
-      if (repairedValidation?.success) {
-        parsedPlan = repairedValidation.data;
-      } else {
+      parsedPlan = ensureOnePagePlan(
+        repairedValidation?.success ? repairedValidation.data : undefined
+      );
+
+      if (!parsedPlan) {
         return NextResponse.json(
-          {
-            error: 'امکان تولید طرح معتبر نبود. لطفاً دوباره تلاش کنید.',
-            details: repairedValidation?.error?.flatten?.(),
-          },
+          { error: 'Unable to repair generation to a valid Perfect V1 Pack' },
           { status: 500 }
         );
       }
     }
 
     const sanitizedPlan = sanitizePlan(parsedPlan);
+
+    if (!sanitizedPlan.onePagePlan) {
+      return NextResponse.json(
+        { error: 'Generated plan is missing onePagePlan section' },
+        { status: 500 }
+      );
+    }
 
     // Use existing project if provided, otherwise create a new one
     let projectIdToUse: string;
@@ -204,7 +221,10 @@ export async function POST(req: Request) {
 
       if (projectLookupError) {
         console.error('Database Error (project lookup):', projectLookupError);
-        return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Database error during project lookup' },
+          { status: 500 }
+        );
       }
 
       if (!existingProject) {
@@ -217,7 +237,7 @@ export async function POST(req: Request) {
         .from('projects')
         .insert({
           user_id: user.id,
-          title: idea?.slice(0, 80) || 'پروژه جدید',
+          title: idea?.slice(0, 80) || 'New Project',
           inputs: parsedBody.data,
         })
         .select('id')
@@ -225,7 +245,7 @@ export async function POST(req: Request) {
 
       if (projectError || !newProject) {
         console.error('Database Error (project):', projectError);
-        return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+        return NextResponse.json({ error: 'Database error creating project' }, { status: 500 });
       }
 
       projectIdToUse = newProject.id;
@@ -242,7 +262,7 @@ export async function POST(req: Request) {
 
     if (versionLookupError) {
       console.error('Database Error (version lookup):', versionLookupError);
-      return NextResponse.json({ error: 'ثبت نسخه ناموفق بود.' }, { status: 500 });
+      return NextResponse.json({ error: 'Database error during version lookup' }, { status: 500 });
     }
 
     const nextVersion = latestVersion?.version ? latestVersion.version + 1 : 1;
@@ -260,7 +280,7 @@ export async function POST(req: Request) {
 
     if (versionInsertError || !versionRow) {
       console.error('Database Error (version insert):', versionInsertError);
-      return NextResponse.json({ error: 'ثبت نسخه ناموفق بود.' }, { status: 500 });
+      return NextResponse.json({ error: 'Database error creating version' }, { status: 500 });
     }
 
     // Split into sections
@@ -299,6 +319,10 @@ export async function POST(req: Request) {
           marketingSteps: sanitizedPlan.marketingSteps,
         },
       },
+      {
+        section_key: 'one_page_plan',
+        content: sanitizedPlan.onePagePlan,
+      },
     ];
 
     const { error: sectionsError } = await supabase
@@ -311,7 +335,7 @@ export async function POST(req: Request) {
         .from('project_versions')
         .update({ status: 'failed', error: sectionsError.message })
         .eq('id', versionRow.id);
-      return NextResponse.json({ error: 'ثبت بخش‌ها ناموفق بود.' }, { status: 500 });
+      return NextResponse.json({ error: 'Database error saving sections' }, { status: 500 });
     }
 
     await supabase.from('project_versions').update({ status: 'done' }).eq('id', versionRow.id);
@@ -323,9 +347,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error generating plan:', error);
-    return NextResponse.json(
-      { error: 'در فرآیند تولید خطا رخ داد. لطفاً دوباره تلاش کنید.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to generate plan' }, { status: 500 });
   }
 }

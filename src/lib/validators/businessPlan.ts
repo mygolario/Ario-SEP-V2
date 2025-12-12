@@ -58,6 +58,22 @@ export const roadmapItemSchema = z
   })
   .strict();
 
+export const onePagePlanSchema = z
+  .object({
+    title: z.string().min(1, 'Title is required'),
+    elevatorPitch: z.string().min(1, 'Elevator pitch is required'),
+    problem: z.string().min(1, 'Problem is required'),
+    solution: z.string().min(1, 'Solution is required'),
+    targetCustomer: z.string().min(1, 'Target customer is required'),
+    uniqueValue: z.string().min(1, 'Unique value is required'),
+    businessModel: z.string().min(1, 'Business model is required'),
+    goToMarket: z.array(z.string().min(1)).min(3, 'At least 3 go-to-market steps'),
+    keyMetrics: z.array(z.string().min(1)).min(3, 'At least 3 key metrics'),
+    risks: z.array(z.string().min(1)).min(3, 'At least 3 risks'),
+    next7Days: z.array(z.string().min(1)).min(5, 'At least 5 items for next 7 days'),
+  })
+  .strict();
+
 export const BusinessPlanV1Schema = z
   .object({
     businessName: z.string().min(1, 'Business name is required'),
@@ -69,6 +85,7 @@ export const BusinessPlanV1Schema = z
     landingPageCopy: landingPageCopySchema,
     leanCanvas: leanCanvasSchema,
     roadmap: z.array(roadmapItemSchema).length(4),
+    onePagePlan: onePagePlanSchema.optional(),
   })
   .strict();
 
@@ -77,4 +94,5 @@ export type Testimonial = z.infer<typeof testimonialSchema>;
 export type LandingPageCopy = z.infer<typeof landingPageCopySchema>;
 export type LeanCanvas = z.infer<typeof leanCanvasSchema>;
 export type RoadmapItem = z.infer<typeof roadmapItemSchema>;
+export type OnePagePlan = z.infer<typeof onePagePlanSchema>;
 export type BusinessPlanV1 = z.infer<typeof BusinessPlanV1Schema>;
