@@ -120,6 +120,12 @@ const parsePlan = (content: string) => {
 const ensureOnePagePlan = (plan: BusinessPlanV1 | undefined) =>
   plan?.onePagePlan ? plan : undefined;
 
+type LimitCheckResult = {
+  allowed: boolean;
+  used: number;
+  remaining: number;
+};
+
 export async function POST(req: Request) {
   const supabase = createClient();
   const startTime = Date.now();
@@ -153,12 +159,15 @@ export async function POST(req: Request) {
     const { idea, audience, vibe, budget, goal, projectId } = parsedBody.data;
     projectIdForTelemetry = projectId ?? undefined;
 
-    const limitResult = await supabase
-      .rpc('check_and_increment_daily', { kind: 'generate', limit: GENERATE_DAILY_LIMIT })
-      .single();
+    const { data: limitRow, error: limitError } = await supabase
+      .rpc('check_and_increment_daily', {
+        kind: 'generate',
+        limit: GENERATE_DAILY_LIMIT,
+      })
+      .single<LimitCheckResult>();
 
-    if (limitResult.error) {
-      console.error('Limit check failed:', limitResult.error);
+    if (limitError) {
+      console.error('Limit check failed:', limitError);
       await trackServerEvent({
         event: 'generation_failed',
         properties: {
@@ -173,15 +182,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'خطا در بررسی محدودیت روزانه' }, { status: 500 });
     }
 
-    if (!limitResult.data?.allowed) {
+    if (!limitRow?.allowed) {
       await trackServerEvent({
         event: 'generation_failed',
         properties: {
           projectId: projectIdForTelemetry ?? null,
           model,
           error: 'limit_reached',
-          used: limitResult.data?.used ?? 0,
-          remaining: limitResult.data?.remaining ?? 0,
+          used: limitRow?.used ?? 0,
+          remaining: limitRow?.remaining ?? 0,
           durationMs: Date.now() - startTime,
         },
         userId,
@@ -190,8 +199,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: 'سقف روزانه تولید به پایان رسیده است.',
-          used: limitResult.data?.used ?? 0,
-          remaining: limitResult.data?.remaining ?? 0,
+          used: limitRow?.used ?? 0,
+          remaining: limitRow?.remaining ?? 0,
         },
         { status: 429 }
       );

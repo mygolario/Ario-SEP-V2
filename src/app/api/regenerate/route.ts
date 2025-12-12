@@ -69,6 +69,12 @@ const parseJson = (content: string) => {
   }
 };
 
+type LimitCheckResult = {
+  allowed: boolean;
+  used: number;
+  remaining: number;
+};
+
 export async function POST(req: Request) {
   const supabase = createClient();
   const startTime = Date.now();
@@ -102,12 +108,12 @@ export async function POST(req: Request) {
     const { projectId } = parsedBody.data;
     projectIdForTelemetry = projectId;
 
-    const limitResult = await supabase
+    const { data: limitRow, error: limitError } = await supabase
       .rpc('check_and_increment_daily', { kind: 'regen', limit: REGEN_DAILY_LIMIT })
-      .single();
+      .single<LimitCheckResult>();
 
-    if (limitResult.error) {
-      console.error('Limit check failed:', limitResult.error);
+    if (limitError) {
+      console.error('Limit check failed:', limitError);
       await trackServerEvent({
         event: 'regen_failed',
         properties: {
@@ -123,7 +129,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'خطا در بررسی محدودیت روزانه' }, { status: 500 });
     }
 
-    if (!limitResult.data?.allowed) {
+    if (!limitRow?.allowed) {
       await trackServerEvent({
         event: 'regen_failed',
         properties: {
@@ -131,8 +137,8 @@ export async function POST(req: Request) {
           sectionKey: 'one_page_plan',
           model,
           error: 'limit_reached',
-          used: limitResult.data?.used ?? 0,
-          remaining: limitResult.data?.remaining ?? 0,
+          used: limitRow?.used ?? 0,
+          remaining: limitRow?.remaining ?? 0,
           durationMs: Date.now() - startTime,
         },
         userId,
@@ -141,8 +147,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: 'سقف روزانه بازتولید تمام شده است.',
-          used: limitResult.data?.used ?? 0,
-          remaining: limitResult.data?.remaining ?? 0,
+          used: limitRow?.used ?? 0,
+          remaining: limitRow?.remaining ?? 0,
         },
         { status: 429 }
       );
