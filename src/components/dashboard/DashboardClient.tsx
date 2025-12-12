@@ -6,8 +6,10 @@ import {
   ArrowRight,
   CheckCircle2,
   Download,
+  FileText,
   Layout,
   Palette,
+  RefreshCcw,
   Rocket,
   ScrollText,
 } from 'lucide-react';
@@ -23,10 +25,17 @@ import type { BusinessPlanV1 } from '@/types/businessPlan';
 
 interface DashboardClientProps {
   initialData: BusinessPlanV1 | null;
+  projectId?: string;
 }
 
-export default function DashboardClient({ initialData }: DashboardClientProps) {
-  const [data] = useState<BusinessPlanV1 | null>(initialData);
+export default function DashboardClient({
+  initialData,
+  projectId: initialProjectId,
+}: DashboardClientProps) {
+  const [data, setData] = useState<BusinessPlanV1 | null>(initialData);
+  const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
+  const [regeneratingOnePagePlan, setRegeneratingOnePagePlan] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
   const safeLogo = sanitizeLogoSvg(data?.logoSVG);
 
   const componentRef = useRef<HTMLDivElement>(null);
@@ -35,6 +44,57 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     contentRef: componentRef,
     documentTitle: `BusinessPlan_${new Date().toISOString().split('T')[0]}`,
   });
+
+  const handleRegenerateOnePagePlan = async () => {
+    if (!projectId) {
+      setRegenerateError('Project ID not available.');
+      return;
+    }
+
+    setRegeneratingOnePagePlan(true);
+    setRegenerateError(null);
+
+    try {
+      const response = await fetch('/api/regenerate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectId, sectionKey: 'one_page_plan' }),
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error((json as { error?: string })?.error || 'Failed to regenerate');
+      }
+
+      const { projectId: returnedProjectId, ...plan } = (json || {}) as Record<string, unknown>;
+      delete (plan as { versionId?: unknown }).versionId;
+
+      setProjectId(typeof returnedProjectId === 'string' ? returnedProjectId : projectId);
+      setData(plan as BusinessPlanV1);
+    } catch (error) {
+      console.error('Regenerate one-page plan failed:', error);
+      setRegenerateError(error instanceof Error ? error.message : 'Failed to regenerate');
+    } finally {
+      setRegeneratingOnePagePlan(false);
+    }
+  };
+
+  const renderBullets = (title: string, items: string[]) => (
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-slate-600 dark:text-slate-200">{title}</p>
+      <ul
+        className="list-disc pr-5 space-y-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+        dir="rtl"
+      >
+        {items.map((item, idx) => (
+          <li key={idx}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
 
   if (!data) {
     return (
@@ -158,6 +218,107 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               <p className="text-lg leading-relaxed text-emerald-900/80 dark:text-emerald-200/80 text-justify">
                 {data.summary}
               </p>
+            </CardContent>
+          </Card>
+
+          {/* One-Page Plan */}
+          <Card className="md:col-span-3 border-amber-100 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/10">
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <CardTitle className="text-lg text-amber-800 dark:text-amber-200">
+                  One-Page Plan
+                </CardTitle>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={handleRegenerateOnePagePlan}
+                disabled={regeneratingOnePagePlan || !projectId}
+              >
+                <RefreshCcw className="w-4 h-4" />
+                {data.onePagePlan ? '????? ??????' : '????? One-Page Plan'}
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {data.onePagePlan ? (
+                <>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                      {data.onePagePlan.title}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-300 text-justify">
+                      {data.onePagePlan.elevatorPitch}
+                    </p>
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 grid md:grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-200">
+                      <div>
+                        <p className="font-semibold">?????</p>
+                        <p className="text-slate-600 dark:text-slate-300">
+                          {data.onePagePlan.problem}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">??????</p>
+                        <p className="text-slate-600 dark:text-slate-300">
+                          {data.onePagePlan.solution}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">????? ???</p>
+                        <p className="text-slate-600 dark:text-slate-300">
+                          {data.onePagePlan.targetCustomer}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">???? ??????</p>
+                        <p className="text-slate-600 dark:text-slate-300">
+                          {data.onePagePlan.uniqueValue}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <p className="font-semibold">??? ????????</p>
+                        <p className="text-slate-600 dark:text-slate-300">
+                          {data.onePagePlan.businessModel}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      {renderBullets('?????? ???? ?? ?????', data.onePagePlan.goToMarket)}
+                      {renderBullets('???????? ?????', data.onePagePlan.keyMetrics)}
+                      {renderBullets('???????', data.onePagePlan.risks)}
+                      {renderBullets('? ??? ?????', data.onePagePlan.next7Days)}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-3 p-4 rounded-lg border border-dashed border-amber-300 dark:border-amber-800 bg-white/60 dark:bg-amber-950/10">
+                  <p className="text-slate-700 dark:text-slate-200">
+                    ???? One-Page Plan ???? ??? ????? ???? ?????. ???? ????? ??? ???? ????? ???? ??
+                    ???? ????.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      className="gap-2"
+                      onClick={handleRegenerateOnePagePlan}
+                      disabled={regeneratingOnePagePlan || !projectId}
+                    >
+                      <RefreshCcw className="w-4 h-4" />
+                      ????? One-Page Plan
+                    </Button>
+                    {!projectId && (
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        ????? ????? ?? ????? ????.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              {regenerateError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{regenerateError}</p>
+              )}
             </CardContent>
           </Card>
 
