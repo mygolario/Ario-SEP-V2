@@ -18,6 +18,7 @@ import { PrintablePlan } from '@/components/dashboard/PrintablePlan';
 import { WebsitePreview } from '@/components/dashboard/WebsitePreview';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 
 interface DashboardClientProps {
@@ -26,6 +27,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [data] = useState<BusinessPlanV1 | null>(initialData);
+  const safeLogo = sanitizeLogoSvg(data?.logoSVG);
 
   const componentRef = useRef<HTMLDivElement>(null);
 
@@ -110,10 +112,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             <CardContent className="flex flex-col items-center gap-6 py-4">
               {/* Logo Preview */}
               <div className="w-full flex justify-center">
-                {data.logoSVG ? (
+                {safeLogo ? (
                   <div
                     className="w-32 h-32 rounded-xl shadow-inner bg-slate-50 dark:bg-slate-800 p-2 flex items-center justify-center overflow-hidden"
-                    dangerouslySetInnerHTML={{ __html: data.logoSVG }}
+                    dangerouslySetInnerHTML={{ __html: safeLogo }}
                   />
                 ) : (
                   <div className="w-32 h-32 rounded-xl shadow-inner bg-slate-100 dark:bg-slate-800 flex items-center justify-center">

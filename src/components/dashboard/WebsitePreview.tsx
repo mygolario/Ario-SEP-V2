@@ -1,12 +1,14 @@
 'use client';
 
-import type { BusinessPlanV1 } from '@/types/businessPlan';
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import { Button } from '@/components/ui/button';
+import type { BusinessPlanV1 } from '@/types/businessPlan';
 
 export function WebsitePreview({ data }: { data: BusinessPlanV1 }) {
   if (!data) return null;
 
   const primaryColor = data.colorPalette[0] || '#000000';
+  const safeLogo = sanitizeLogoSvg(data.logoSVG);
 
   return (
     <div className="w-full h-full flex flex-col border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden bg-white dark:bg-slate-950 mb-8">
@@ -33,8 +35,8 @@ export function WebsitePreview({ data }: { data: BusinessPlanV1 }) {
         {/* Navbar */}
         <nav className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            {data.logoSVG ? (
-              <div className="w-10 h-10" dangerouslySetInnerHTML={{ __html: data.logoSVG }} />
+            {safeLogo ? (
+              <div className="w-10 h-10" dangerouslySetInnerHTML={{ __html: safeLogo }} />
             ) : (
               <div className="font-bold text-xl">{data.businessName}</div>
             )}

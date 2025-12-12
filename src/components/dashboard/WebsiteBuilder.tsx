@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Download, Globe, Layout, Monitor, Smartphone, Star } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +21,7 @@ export function WebsiteBuilder({ data }: WebsiteBuilderProps) {
   const { headline, subheadline, cta, features = [], testimonials = [], footer } = landingPageCopy;
   const brandColors = colorPalette.length > 0 ? colorPalette : ['#4f46e5', '#818cf8', '#c7d2fe'];
   const primaryColor = brandColors[0];
+  const safeLogo = sanitizeLogoSvg(logoSVG);
 
   const handleDownload = () => {
     const code = `
@@ -55,8 +57,8 @@ export function WebsiteBuilder({ data }: WebsiteBuilderProps) {
   };
 
   const DynamicIcon = ({ name }: { name?: string }) => {
-    const iconLibrary = LucideIcons as Record<string, typeof Star>;
-    const Icon = (name && iconLibrary[name]) || Star;
+    const candidate = name ? (LucideIcons as Record<string, unknown>)[name] : null;
+    const Icon = typeof candidate === 'function' ? (candidate as typeof Star) : Star;
     return <Icon className="w-8 h-8 mb-4 text-indigo-600" />;
   };
 
@@ -125,8 +127,8 @@ export function WebsiteBuilder({ data }: WebsiteBuilderProps) {
             {/* Navigation */}
             <nav className="flex justify-between items-center p-6 border-b border-slate-100">
               <div className="font-bold text-xl flex items-center gap-2">
-                {logoSVG ? (
-                  <div className="w-8 h-8" dangerouslySetInnerHTML={{ __html: logoSVG }} />
+                {safeLogo ? (
+                  <div className="w-8 h-8" dangerouslySetInnerHTML={{ __html: safeLogo }} />
                 ) : (
                   <div className="w-8 h-8 bg-indigo-600 rounded-lg"></div>
                 )}

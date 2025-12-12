@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
+import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import { createClient } from '@/utils/supabase/server';
+
+export const runtime = 'nodejs';
+
+const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-3-pro-preview';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -29,7 +34,7 @@ Structure (must match exactly):
   "businessName": "Creative modern Farsi name",
   "tagline": "Catchy Farsi slogan",
   "summary": "2-3 paragraph executive summary in Farsi",
-  "colorPalette": ["#HEX", "#HEX", "#HEX", "#HEX"],
+  "colorPalette": ["#HEX", "#HEX", "#HEX", "#HEX"] (4-6 valid hex values),
   "logoSVG": "<svg...>" optional,
   "marketingSteps": ["Step 1 Farsi", "Step 2 Farsi", "Step 3 Farsi", "Step 4 Farsi", "Step 5 Farsi"],
   "landingPageCopy": {
@@ -70,6 +75,28 @@ Guardrails:
 - Do not add fields outside this structure.
 `;
 
+const repairPrompt = `
+You are a strict JSON repair bot. Fix the provided JSON so it matches the exact BusinessPlanV1 schema described above.
+Rules:
+- Output JSON only, no prose.
+- Preserve Farsi content.
+- Ensure colorPalette entries are valid hex strings and length 4-6.
+- marketingSteps must be exactly 5 items, roadmap exactly 4 items.
+`;
+
+const sanitizePlan = (plan: BusinessPlanV1): BusinessPlanV1 => ({
+  ...plan,
+  logoSVG: sanitizeLogoSvg(plan.logoSVG),
+});
+
+const parsePlan = (content: string) => {
+  try {
+    return JSON.parse(content);
+  } catch {
+    return null;
+  }
+};
+
 export async function POST(req: Request) {
   try {
     const supabase = createClient();
@@ -96,7 +123,7 @@ export async function POST(req: Request) {
     const { idea, audience, vibe, budget, goal } = parsedBody.data;
 
     const completion = await openai.chat.completions.create({
-      model: 'google/gemini-3-pro-preview',
+      model,
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -110,32 +137,57 @@ export async function POST(req: Request) {
     const content = completion.choices[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json({ error: 'No content generated from model' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'پاسخی از مدل دریافت نشد. لطفاً دوباره تلاش کنید.' },
+        { status: 500 }
+      );
     }
 
-    let parsedPlan: BusinessPlanV1;
-    try {
-      const jsonPlan = JSON.parse(content);
-      const planResult = BusinessPlanV1Schema.safeParse(jsonPlan);
+    const initialJson = parsePlan(content);
+    const initialValidation = initialJson ? BusinessPlanV1Schema.safeParse(initialJson) : null;
 
-      if (!planResult.success) {
+    let parsedPlan: BusinessPlanV1 | undefined = initialValidation?.success
+      ? initialValidation.data
+      : undefined;
+
+    if (!parsedPlan) {
+      const repairCompletion = await openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: repairPrompt },
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: `Invalid JSON:\n${content}\n\nFix to match schema exactly and return JSON only.`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+      });
+
+      const repairedContent = repairCompletion.choices[0]?.message?.content;
+      const repairedJson = repairedContent ? parsePlan(repairedContent) : null;
+      const repairedValidation = repairedJson ? BusinessPlanV1Schema.safeParse(repairedJson) : null;
+
+      if (repairedValidation?.success) {
+        parsedPlan = repairedValidation.data;
+      } else {
         return NextResponse.json(
-          { error: 'Generated plan failed validation', details: planResult.error.flatten() },
+          {
+            error: 'امکان تولید طرح معتبر نبود. لطفاً دوباره تلاش کنید.',
+            details: repairedValidation?.error?.flatten?.(),
+          },
           { status: 500 }
         );
       }
-
-      parsedPlan = planResult.data;
-    } catch (parseError) {
-      console.error('Failed to parse or validate AI response', parseError);
-      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
     }
+
+    const sanitizedPlan = sanitizePlan(parsedPlan);
 
     const { data: project, error: dbError } = await supabase
       .from('projects')
       .insert({
         user_id: user.id,
-        business_data: parsedPlan,
+        business_data: sanitizedPlan,
       })
       .select()
       .single();
@@ -145,9 +197,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to save project' }, { status: 500 });
     }
 
-    return NextResponse.json({ ...parsedPlan, projectId: project.id });
+    return NextResponse.json({ ...sanitizedPlan, projectId: project.id });
   } catch (error) {
     console.error('Error generating plan:', error);
-    return NextResponse.json({ error: 'Failed to generate plan' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'در فرآیند تولید خطا رخ داد. لطفاً دوباره تلاش کنید.' },
+      { status: 500 }
+    );
   }
 }
