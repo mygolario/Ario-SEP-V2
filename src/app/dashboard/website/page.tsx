@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 
 import { WebsiteBuilder } from '@/components/dashboard/WebsiteBuilder';
+import { assemblePlan } from '@/lib/plan/assemblePlan';
 import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
+import type { SectionKey } from '@/types/sections';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
 
@@ -16,19 +18,62 @@ export default async function WebsitePage() {
 
   if (!user) return null;
 
-  // Fetch the LATEST project
+  let businessPlan: BusinessPlanV1 | null = null;
+
   const { data: projects } = await supabase
     .from('projects')
-    .select('*')
+    .select('id')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
     .limit(1);
 
-  const project = projects?.[0]?.business_data;
-  const parsedProject = project ? BusinessPlanV1Schema.safeParse(project) : null;
-  const businessPlan: BusinessPlanV1 | null = parsedProject?.success
-    ? { ...parsedProject.data, logoSVG: sanitizeLogoSvg(parsedProject.data.logoSVG) }
-    : null;
+  const projectId = projects?.[0]?.id;
+
+  if (projectId) {
+    const { data: latestVersion } = await supabase
+      .from('project_versions')
+      .select('id')
+      .eq('project_id', projectId)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestVersion?.id) {
+      const { data: sections } = await supabase
+        .from('project_sections')
+        .select('section_key, content')
+        .eq('version_id', latestVersion.id);
+
+      if (sections && sections.length > 0) {
+        try {
+          const normalized = sections.map((section) => ({
+            section_key: section.section_key as SectionKey,
+            content: section.content as unknown,
+          }));
+          businessPlan = assemblePlan(normalized);
+        } catch {
+          businessPlan = null;
+        }
+      }
+    }
+
+    if (!businessPlan) {
+      const { data: legacy } = await supabase
+        .from('projects')
+        .select('business_data')
+        .eq('id', projectId)
+        .eq('user_id', user.id)
+        .single();
+
+      const parsedProject = legacy?.business_data
+        ? BusinessPlanV1Schema.safeParse(legacy.business_data)
+        : null;
+      businessPlan = parsedProject?.success
+        ? { ...parsedProject.data, logoSVG: sanitizeLogoSvg(parsedProject.data.logoSVG) }
+        : null;
+    }
+  }
+
   const hasContent = businessPlan?.landingPageCopy?.headline;
 
   if (!businessPlan || !hasContent) {

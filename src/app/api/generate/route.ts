@@ -11,17 +11,13 @@ export const runtime = 'nodejs';
 
 const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-3-pro-preview';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-});
-
 const generationInputSchema = z.object({
   idea: z.string().min(1, 'idea is required'),
   audience: z.string().min(1, 'audience is required'),
   vibe: z.string().min(1, 'vibe is required'),
   budget: z.string().min(1, 'budget is required'),
   goal: z.string().min(1, 'goal is required'),
+  projectId: z.string().uuid().optional(),
 });
 
 const systemPrompt = `
@@ -120,7 +116,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const { idea, audience, vibe, budget, goal } = parsedBody.data;
+    const { idea, audience, vibe, budget, goal, projectId } = parsedBody.data;
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
+    if (!apiKey) {
+      console.error('OPENROUTER_API_KEY not configured');
+      return NextResponse.json({ error: 'Configuration error: missing API key' }, { status: 500 });
+    }
+
+    const openai = new OpenAI({
+      apiKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+    });
 
     const completion = await openai.chat.completions.create({
       model,
@@ -183,21 +191,136 @@ export async function POST(req: Request) {
 
     const sanitizedPlan = sanitizePlan(parsedPlan);
 
-    const { data: project, error: dbError } = await supabase
-      .from('projects')
-      .insert({
-        user_id: user.id,
-        business_data: sanitizedPlan,
-      })
-      .select()
-      .single();
+    // Use existing project if provided, otherwise create a new one
+    let projectIdToUse: string;
 
-    if (dbError) {
-      console.error('Database Error:', dbError);
-      return NextResponse.json({ error: 'Failed to save project' }, { status: 500 });
+    if (projectId) {
+      const { data: existingProject, error: projectLookupError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('id', projectId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (projectLookupError) {
+        console.error('Database Error (project lookup):', projectLookupError);
+        return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+      }
+
+      if (!existingProject) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+
+      projectIdToUse = existingProject.id;
+    } else {
+      const { data: newProject, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          title: idea?.slice(0, 80) || 'پروژه جدید',
+          inputs: parsedBody.data,
+        })
+        .select('id')
+        .single();
+
+      if (projectError || !newProject) {
+        console.error('Database Error (project):', projectError);
+        return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
+      }
+
+      projectIdToUse = newProject.id;
     }
 
-    return NextResponse.json({ ...sanitizedPlan, projectId: project.id });
+    // Determine next version
+    const { data: latestVersion, error: versionLookupError } = await supabase
+      .from('project_versions')
+      .select('version')
+      .eq('project_id', projectIdToUse)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (versionLookupError) {
+      console.error('Database Error (version lookup):', versionLookupError);
+      return NextResponse.json({ error: 'ثبت نسخه ناموفق بود.' }, { status: 500 });
+    }
+
+    const nextVersion = latestVersion?.version ? latestVersion.version + 1 : 1;
+
+    const { data: versionRow, error: versionInsertError } = await supabase
+      .from('project_versions')
+      .insert({
+        project_id: projectIdToUse,
+        version: nextVersion,
+        status: 'generating',
+        model,
+      })
+      .select('id')
+      .single();
+
+    if (versionInsertError || !versionRow) {
+      console.error('Database Error (version insert):', versionInsertError);
+      return NextResponse.json({ error: 'ثبت نسخه ناموفق بود.' }, { status: 500 });
+    }
+
+    // Split into sections
+    const sections = [
+      {
+        section_key: 'identity',
+        content: {
+          businessName: sanitizedPlan.businessName,
+          tagline: sanitizedPlan.tagline,
+          summary: sanitizedPlan.summary,
+        },
+      },
+      {
+        section_key: 'branding',
+        content: {
+          colorPalette: sanitizedPlan.colorPalette,
+          logoSVG: sanitizedPlan.logoSVG,
+        },
+      },
+      {
+        section_key: 'landing',
+        content: {
+          landingPageCopy: sanitizedPlan.landingPageCopy,
+        },
+      },
+      {
+        section_key: 'lean_canvas',
+        content: {
+          leanCanvas: sanitizedPlan.leanCanvas,
+        },
+      },
+      {
+        section_key: 'roadmap',
+        content: {
+          roadmap: sanitizedPlan.roadmap,
+          marketingSteps: sanitizedPlan.marketingSteps,
+        },
+      },
+    ];
+
+    const { error: sectionsError } = await supabase
+      .from('project_sections')
+      .insert(sections.map((s) => ({ ...s, version_id: versionRow.id })));
+
+    if (sectionsError) {
+      console.error('Database Error (sections insert):', sectionsError);
+      await supabase
+        .from('project_versions')
+        .update({ status: 'failed', error: sectionsError.message })
+        .eq('id', versionRow.id);
+      return NextResponse.json({ error: 'ثبت بخش‌ها ناموفق بود.' }, { status: 500 });
+    }
+
+    await supabase.from('project_versions').update({ status: 'done' }).eq('id', versionRow.id);
+
+    return NextResponse.json({
+      ...sanitizedPlan,
+      projectId: projectIdToUse,
+      versionId: versionRow.id,
+    });
   } catch (error) {
     console.error('Error generating plan:', error);
     return NextResponse.json(
