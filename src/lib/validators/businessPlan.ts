@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+const hexColor = z
+  .string()
+  .regex(/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/, 'Color must be a valid hex code');
+
 export const landingPageFeatureSchema = z
   .object({
     title: z.string().min(1, 'Feature title is required'),
@@ -59,12 +63,12 @@ export const BusinessPlanV1Schema = z
     businessName: z.string().min(1, 'Business name is required'),
     tagline: z.string().min(1, 'Tagline is required'),
     summary: z.string().min(1, 'Summary is required'),
-    colorPalette: z.array(z.string().min(1)).min(1),
+    colorPalette: z.array(hexColor).min(4).max(6),
     logoSVG: z.string().min(1).optional(),
-    marketingSteps: z.array(z.string().min(1)).min(1),
+    marketingSteps: z.array(z.string().min(1)).length(5),
     landingPageCopy: landingPageCopySchema,
     leanCanvas: leanCanvasSchema,
-    roadmap: z.array(roadmapItemSchema).min(1),
+    roadmap: z.array(roadmapItemSchema).length(4),
   })
   .strict();
 
