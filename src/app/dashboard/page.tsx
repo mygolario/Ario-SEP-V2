@@ -24,6 +24,7 @@ export default async function DashboardPage({
 
   let projectId = searchParams.projectId;
   let projectData: BusinessPlanV1 | null = null;
+  let versionId: string | undefined;
 
   if (!projectId) {
     const { data: projects } = await supabase
@@ -48,6 +49,7 @@ export default async function DashboardPage({
       .maybeSingle();
 
     if (latestVersion?.id) {
+      versionId = latestVersion.id;
       const { data: sections } = await supabase
         .from('project_sections')
         .select('section_key, content')
@@ -88,5 +90,5 @@ export default async function DashboardPage({
     }
   }
 
-  return <DashboardClient initialData={projectData} projectId={projectId} />;
+  return <DashboardClient initialData={projectData} projectId={projectId} versionId={versionId} />;
 }
