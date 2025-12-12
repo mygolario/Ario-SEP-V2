@@ -3,11 +3,7 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 
 import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
-import {
-  BusinessPlanV1Schema,
-  landingPageCopySchema,
-  leanCanvasSchema,
-} from '@/lib/validators/businessPlan';
+import { landingPageCopySchema, leanCanvasSchema } from '@/lib/validators/businessPlan';
 import { assemblePlan } from '@/lib/plan/assemblePlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import type { SectionKey } from '@/types/sections';
@@ -224,7 +220,10 @@ Language: Farsi (Persian).
     if (!validation.success) {
       console.error('Validation failed for regenerated section:', validation.error);
       // Verify failed status
-      await supabase.from('project_versions').update({ status: 'failed', error: 'Validation failed' }).eq('id', newVersionId);
+      await supabase
+        .from('project_versions')
+        .update({ status: 'failed', error: 'Validation failed' })
+        .eq('id', newVersionId);
       return NextResponse.json({ error: 'AI generated invalid data' }, { status: 500 });
     }
 
@@ -251,13 +250,14 @@ Language: Farsi (Persian).
       content: newSectionData,
     });
 
-    const { error: insertError } = await supabase
-      .from('project_sections')
-      .insert(sectionsToInsert);
+    const { error: insertError } = await supabase.from('project_sections').insert(sectionsToInsert);
 
     if (insertError) {
       console.error('Section insert error:', insertError);
-        await supabase.from('project_versions').update({ status: 'failed', error: insertError.message }).eq('id', newVersionId);
+      await supabase
+        .from('project_versions')
+        .update({ status: 'failed', error: insertError.message })
+        .eq('id', newVersionId);
       return NextResponse.json({ error: 'Failed to save sections' }, { status: 500 });
     }
 
@@ -269,7 +269,6 @@ Language: Farsi (Persian).
       versionId: newVersionId,
       updatedSection: newSectionData,
     });
-
   } catch (error) {
     console.error('Regeneration error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
