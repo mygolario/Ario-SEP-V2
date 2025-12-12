@@ -21,11 +21,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 
+import { RegenerateButton } from '@/components/dashboard/RegenerateButton';
+
 interface DashboardClientProps {
   initialData: BusinessPlanV1 | null;
+  projectId?: string;
 }
 
-export default function DashboardClient({ initialData }: DashboardClientProps) {
+export default function DashboardClient({ initialData, projectId }: DashboardClientProps) {
   const [data] = useState<BusinessPlanV1 | null>(initialData);
   const safeLogo = sanitizeLogoSvg(data?.logoSVG);
 
@@ -86,13 +89,23 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card A: Identity (Spans 2 cols) */}
-          <Card className="md:col-span-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 shadow-lg relative overflow-hidden">
+          <Card className="md:col-span-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
                 {data.businessName}
               </CardTitle>
-              <Rocket className="w-8 h-8 text-indigo-500 opacity-20" />
+              <div className="flex items-center gap-2">
+                {projectId && (
+                  <RegenerateButton 
+                    projectId={projectId} 
+                    sectionKey="identity" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    label="بازسازی هویت"
+                  />
+                )}
+                <Rocket className="w-8 h-8 text-indigo-500 opacity-20" />
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-xl text-slate-600 dark:text-slate-300 font-medium">
@@ -102,12 +115,22 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           </Card>
 
           {/* Card B: Visuals */}
-          <Card className="md:col-span-1 shadow-md">
-            <CardHeader className="flex flex-row items-center gap-2 pb-2">
-              <Palette className="w-5 h-5 text-slate-500" />
-              <CardTitle className="text-lg text-slate-700 dark:text-slate-200">
-                هویت بصری
-              </CardTitle>
+          <Card className="md:col-span-1 shadow-md group">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+              <div className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-slate-500" />
+                <CardTitle className="text-lg text-slate-700 dark:text-slate-200">
+                  هویت بصری
+                </CardTitle>
+              </div>
+              {projectId && (
+                <RegenerateButton 
+                  projectId={projectId} 
+                  sectionKey="branding" 
+                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 text-xs"
+                  label="بازسازی"
+                />
+              )}
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6 py-4">
               {/* Logo Preview */}
@@ -129,13 +152,13 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               {/* Color Palette */}
               <div className="flex gap-3">
                 {data.colorPalette.map((color, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1 group">
+                  <div key={idx} className="flex flex-col items-center gap-1 group/color">
                     <div
                       className="w-8 h-8 rounded-full border border-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-110"
                       style={{ backgroundColor: color }}
                     />
                     <span
-                      className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity font-mono"
+                      className="text-[10px] text-slate-400 opacity-0 group-hover/color:opacity-100 transition-opacity font-mono"
                       dir="ltr"
                     >
                       {color}
@@ -187,12 +210,22 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           </Card>
 
           {/* Card E: Website Copy */}
-          <Card className="md:col-span-2 flex flex-col justify-center border-slate-200 dark:border-slate-800">
-            <CardHeader className="flex flex-row items-center gap-2">
-              <Layout className="w-5 h-5 text-slate-500" />
-              <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
-                متن وب‌سایت پیشنهادی
-              </CardTitle>
+          <Card className="md:col-span-2 flex flex-col justify-center border-slate-200 dark:border-slate-800 group">
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Layout className="w-5 h-5 text-slate-500" />
+                <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
+                  متن وب‌سایت پیشنهادی
+                </CardTitle>
+              </div>
+              {projectId && (
+                <RegenerateButton 
+                  projectId={projectId} 
+                  sectionKey="landing" 
+                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 text-xs"
+                  label="بازسازی"
+                />
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-6 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
@@ -211,6 +244,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             </CardContent>
           </Card>
 
+
           {/* Website Simulator (Spans Full Width) */}
           <div className="md:col-span-3 mt-8">
             <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -220,10 +254,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             <WebsitePreview data={data} />
           </div>
 
-          {/* Roadmap (Spans Full Width) */}
           {data.roadmap && (
             <div className="md:col-span-3 mt-8">
-              <Roadmap roadmap={data.roadmap} />
+              <Roadmap roadmap={data.roadmap} projectId={projectId} />
             </div>
           )}
         </div>

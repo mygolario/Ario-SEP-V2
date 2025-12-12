@@ -5,27 +5,39 @@ import { CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { RoadmapItem } from '@/types/businessPlan';
 
+import { RegenerateButton } from '@/components/dashboard/RegenerateButton';
+
 interface RoadmapProps {
   roadmap: RoadmapItem[];
+  projectId?: string;
 }
 
-export function Roadmap({ roadmap }: RoadmapProps) {
+export function Roadmap({ roadmap, projectId }: RoadmapProps) {
   if (!roadmap || roadmap.length === 0) return null;
 
   return (
     <div className="w-full space-y-8" dir="rtl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-          <CheckCircle2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+            <CheckCircle2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              نقشه راه ۳۰ روزه
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400">
+              برنامه عملیاتی گام‌به‌گام برای راه‌اندازی
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            نقشه راه ۳۰ روزه
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            برنامه عملیاتی گام‌به‌گام برای راه‌اندازی
-          </p>
-        </div>
+        {projectId && (
+          <RegenerateButton 
+            projectId={projectId} 
+            sectionKey="roadmap" 
+            label="بازسازی"
+          />
+        )}
       </div>
 
       <div className="relative border-r-2 border-slate-200 dark:border-slate-800 mr-4 md:mr-6 space-y-12 pb-12">

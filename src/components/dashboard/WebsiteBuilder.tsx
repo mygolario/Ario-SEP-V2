@@ -10,11 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { BusinessPlanV1, LandingPageFeature, Testimonial } from '@/types/businessPlan';
 
+import { RegenerateButton } from '@/components/dashboard/RegenerateButton';
+
 interface WebsiteBuilderProps {
   data: BusinessPlanV1;
+  projectId?: string;
 }
 
-export function WebsiteBuilder({ data }: WebsiteBuilderProps) {
+export function WebsiteBuilder({ data, projectId }: WebsiteBuilderProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
 
   const { landingPageCopy, logoSVG, colorPalette, businessName } = data;
@@ -77,6 +80,8 @@ export function WebsiteBuilder({ data }: WebsiteBuilderProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {projectId && <RegenerateButton projectId={projectId} sectionKey="landing" label="بازسازی" />}
+          
           <Tabs
             value={viewMode}
             onValueChange={(v: string) => setViewMode(v as 'desktop' | 'mobile')}
