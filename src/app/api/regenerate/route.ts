@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { assemblePlan } from '@/lib/plan/assemblePlan';
 import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
+import { trackServerEvent } from '@/lib/telemetry/trackServerEvent';
 import { onePagePlanSchema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import type { SectionKey } from '@/types/sections';
@@ -12,6 +13,18 @@ import { createClient } from '@/utils/supabase/server';
 export const runtime = 'nodejs';
 
 const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-3-pro-preview';
+
+const MAX_LIMIT = 1_000_000;
+
+const parseLimit = (value: string | undefined, fallback: number) => {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return Math.min(parsed, MAX_LIMIT);
+  }
+  return fallback;
+};
+
+const REGEN_DAILY_LIMIT = parseLimit(process.env.REGEN_DAILY_LIMIT, MAX_LIMIT);
 
 const regenerateSchema = z.object({
   projectId: z.string().uuid(),
@@ -57,8 +70,13 @@ const parseJson = (content: string) => {
 };
 
 export async function POST(req: Request) {
+  const supabase = createClient();
+  const startTime = Date.now();
+  let userId: string | null = null;
+  let projectIdForTelemetry: string | undefined;
+  let versionIdForTelemetry: string | undefined;
+
   try {
-    const supabase = createClient();
     const {
       data: { user },
       error: authError,
@@ -68,6 +86,8 @@ export async function POST(req: Request) {
       console.error('User not authenticated:', authError);
       return NextResponse.json({ error: 'Unauthorized: User not logged in' }, { status: 401 });
     }
+
+    userId = user.id;
 
     const body = await req.json();
     const parsedBody = regenerateSchema.safeParse(body);
@@ -80,6 +100,53 @@ export async function POST(req: Request) {
     }
 
     const { projectId } = parsedBody.data;
+    projectIdForTelemetry = projectId;
+
+    const limitResult = await supabase
+      .rpc('check_and_increment_daily', { kind: 'regen', limit: REGEN_DAILY_LIMIT })
+      .single();
+
+    if (limitResult.error) {
+      console.error('Limit check failed:', limitResult.error);
+      await trackServerEvent({
+        event: 'regen_failed',
+        properties: {
+          projectId,
+          sectionKey: 'one_page_plan',
+          model,
+          error: 'limit_check_failed',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
+      return NextResponse.json({ error: 'خطا در بررسی محدودیت روزانه' }, { status: 500 });
+    }
+
+    if (!limitResult.data?.allowed) {
+      await trackServerEvent({
+        event: 'regen_failed',
+        properties: {
+          projectId,
+          sectionKey: 'one_page_plan',
+          model,
+          error: 'limit_reached',
+          used: limitResult.data?.used ?? 0,
+          remaining: limitResult.data?.remaining ?? 0,
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
+      return NextResponse.json(
+        {
+          error: 'سقف روزانه بازتولید تمام شده است.',
+          used: limitResult.data?.used ?? 0,
+          remaining: limitResult.data?.remaining ?? 0,
+        },
+        { status: 429 }
+      );
+    }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -87,6 +154,17 @@ export async function POST(req: Request) {
       console.error('OPENROUTER_API_KEY not configured');
       return NextResponse.json({ error: 'Configuration error: missing API key' }, { status: 500 });
     }
+
+    await trackServerEvent({
+      event: 'regen_started',
+      properties: {
+        projectId,
+        sectionKey: 'one_page_plan',
+        model,
+      },
+      userId,
+      supabase,
+    });
 
     const openai = new OpenAI({
       apiKey,
@@ -180,6 +258,18 @@ export async function POST(req: Request) {
     const content = completion.choices[0]?.message?.content;
 
     if (!content) {
+      await trackServerEvent({
+        event: 'regen_failed',
+        properties: {
+          projectId,
+          sectionKey: 'one_page_plan',
+          model,
+          error: 'empty_completion',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
       return NextResponse.json({ error: 'No content returned from model' }, { status: 500 });
     }
 
@@ -209,6 +299,18 @@ export async function POST(req: Request) {
       if (repairedValidation?.success) {
         onePagePlan = repairedValidation.data;
       } else {
+        await trackServerEvent({
+          event: 'regen_failed',
+          properties: {
+            projectId,
+            sectionKey: 'one_page_plan',
+            model,
+            error: 'repair_failed',
+            durationMs: Date.now() - startTime,
+          },
+          userId,
+          supabase,
+        });
         return NextResponse.json(
           { error: 'Unable to repair onePagePlan generation' },
           { status: 500 }
@@ -239,6 +341,8 @@ export async function POST(req: Request) {
       console.error('Database Error (version insert):', versionInsertError);
       return NextResponse.json({ error: 'Database error creating version' }, { status: 500 });
     }
+
+    versionIdForTelemetry = versionRow.id;
 
     const sectionsToInsert = [
       {
@@ -297,6 +401,21 @@ export async function POST(req: Request) {
         .from('project_versions')
         .update({ status: 'failed', error: sectionsInsertError.message })
         .eq('id', versionRow.id);
+
+      await trackServerEvent({
+        event: 'regen_failed',
+        properties: {
+          projectId,
+          versionId: versionIdForTelemetry ?? null,
+          sectionKey: 'one_page_plan',
+          model,
+          error: 'sections_insert_failed',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
+
       return NextResponse.json(
         { error: 'Database error saving regenerated section' },
         { status: 500 }
@@ -305,6 +424,19 @@ export async function POST(req: Request) {
 
     await supabase.from('project_versions').update({ status: 'done' }).eq('id', versionRow.id);
 
+    await trackServerEvent({
+      event: 'regen_success',
+      properties: {
+        projectId,
+        versionId: versionIdForTelemetry ?? null,
+        sectionKey: 'one_page_plan',
+        model,
+        durationMs: Date.now() - startTime,
+      },
+      userId,
+      supabase,
+    });
+
     return NextResponse.json({
       ...sanitizedPlan,
       projectId,
@@ -312,6 +444,21 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error regenerating plan:', error);
+
+    await trackServerEvent({
+      event: 'regen_failed',
+      properties: {
+        projectId: projectIdForTelemetry ?? null,
+        versionId: versionIdForTelemetry ?? null,
+        sectionKey: 'one_page_plan',
+        model,
+        error: error instanceof Error ? error.message : 'unknown_error',
+        durationMs: Date.now() - startTime,
+      },
+      userId,
+      supabase,
+    });
+
     return NextResponse.json({ error: 'Failed to regenerate section' }, { status: 500 });
   }
 }

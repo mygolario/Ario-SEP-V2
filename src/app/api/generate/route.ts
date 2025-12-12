@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 
 import { sanitizeLogoSvg } from '@/lib/security/sanitizeSvg';
+import { trackServerEvent } from '@/lib/telemetry/trackServerEvent';
 import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import { createClient } from '@/utils/supabase/server';
@@ -10,6 +11,18 @@ import { createClient } from '@/utils/supabase/server';
 export const runtime = 'nodejs';
 
 const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-3-pro-preview';
+
+const MAX_LIMIT = 1_000_000;
+
+const parseLimit = (value: string | undefined, fallback: number) => {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return Math.min(parsed, MAX_LIMIT);
+  }
+  return fallback;
+};
+
+const GENERATE_DAILY_LIMIT = parseLimit(process.env.GENERATE_DAILY_LIMIT, MAX_LIMIT);
 
 const generationInputSchema = z.object({
   idea: z.string().min(1, 'idea is required'),
@@ -108,8 +121,13 @@ const ensureOnePagePlan = (plan: BusinessPlanV1 | undefined) =>
   plan?.onePagePlan ? plan : undefined;
 
 export async function POST(req: Request) {
+  const supabase = createClient();
+  const startTime = Date.now();
+  let userId: string | null = null;
+  let projectIdForTelemetry: string | undefined;
+  let versionIdForTelemetry: string | undefined;
+
   try {
-    const supabase = createClient();
     const {
       data: { user },
       error: authError,
@@ -119,6 +137,8 @@ export async function POST(req: Request) {
       console.error('User not authenticated:', authError);
       return NextResponse.json({ error: 'Unauthorized: User not logged in' }, { status: 401 });
     }
+
+    userId = user.id;
 
     const jsonBody = await req.json();
     const parsedBody = generationInputSchema.safeParse(jsonBody);
@@ -131,6 +151,51 @@ export async function POST(req: Request) {
     }
 
     const { idea, audience, vibe, budget, goal, projectId } = parsedBody.data;
+    projectIdForTelemetry = projectId ?? undefined;
+
+    const limitResult = await supabase
+      .rpc('check_and_increment_daily', { kind: 'generate', limit: GENERATE_DAILY_LIMIT })
+      .single();
+
+    if (limitResult.error) {
+      console.error('Limit check failed:', limitResult.error);
+      await trackServerEvent({
+        event: 'generation_failed',
+        properties: {
+          projectId: projectIdForTelemetry ?? null,
+          model,
+          error: 'limit_check_failed',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
+      return NextResponse.json({ error: 'خطا در بررسی محدودیت روزانه' }, { status: 500 });
+    }
+
+    if (!limitResult.data?.allowed) {
+      await trackServerEvent({
+        event: 'generation_failed',
+        properties: {
+          projectId: projectIdForTelemetry ?? null,
+          model,
+          error: 'limit_reached',
+          used: limitResult.data?.used ?? 0,
+          remaining: limitResult.data?.remaining ?? 0,
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
+      return NextResponse.json(
+        {
+          error: 'سقف روزانه تولید به پایان رسیده است.',
+          used: limitResult.data?.used ?? 0,
+          remaining: limitResult.data?.remaining ?? 0,
+        },
+        { status: 429 }
+      );
+    }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -138,6 +203,16 @@ export async function POST(req: Request) {
       console.error('OPENROUTER_API_KEY not configured');
       return NextResponse.json({ error: 'Configuration error: missing API key' }, { status: 500 });
     }
+
+    await trackServerEvent({
+      event: 'generation_started',
+      properties: {
+        projectId: projectIdForTelemetry ?? null,
+        model,
+      },
+      userId,
+      supabase,
+    });
 
     const openai = new OpenAI({
       apiKey,
@@ -159,6 +234,17 @@ export async function POST(req: Request) {
     const content = completion.choices[0]?.message?.content;
 
     if (!content) {
+      await trackServerEvent({
+        event: 'generation_failed',
+        properties: {
+          projectId: projectIdForTelemetry ?? null,
+          model,
+          error: 'empty_completion',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
       return NextResponse.json({ error: 'No content returned from model' }, { status: 500 });
     }
 
@@ -192,6 +278,17 @@ export async function POST(req: Request) {
       );
 
       if (!parsedPlan) {
+        await trackServerEvent({
+          event: 'generation_failed',
+          properties: {
+            projectId: projectIdForTelemetry ?? null,
+            model,
+            error: 'repair_failed',
+            durationMs: Date.now() - startTime,
+          },
+          userId,
+          supabase,
+        });
         return NextResponse.json(
           { error: 'Unable to repair generation to a valid Perfect V1 Pack' },
           { status: 500 }
@@ -202,6 +299,17 @@ export async function POST(req: Request) {
     const sanitizedPlan = sanitizePlan(parsedPlan);
 
     if (!sanitizedPlan.onePagePlan) {
+      await trackServerEvent({
+        event: 'generation_failed',
+        properties: {
+          projectId: projectIdForTelemetry ?? null,
+          model,
+          error: 'missing_one_page_plan',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
       return NextResponse.json(
         { error: 'Generated plan is missing onePagePlan section' },
         { status: 500 }
@@ -251,6 +359,8 @@ export async function POST(req: Request) {
       projectIdToUse = newProject.id;
     }
 
+    projectIdForTelemetry = projectIdToUse;
+
     // Determine next version
     const { data: latestVersion, error: versionLookupError } = await supabase
       .from('project_versions')
@@ -282,6 +392,8 @@ export async function POST(req: Request) {
       console.error('Database Error (version insert):', versionInsertError);
       return NextResponse.json({ error: 'Database error creating version' }, { status: 500 });
     }
+
+    versionIdForTelemetry = versionRow.id;
 
     // Split into sections
     const sections = [
@@ -335,10 +447,36 @@ export async function POST(req: Request) {
         .from('project_versions')
         .update({ status: 'failed', error: sectionsError.message })
         .eq('id', versionRow.id);
+
+      await trackServerEvent({
+        event: 'generation_failed',
+        properties: {
+          projectId: projectIdForTelemetry ?? null,
+          versionId: versionIdForTelemetry ?? null,
+          model,
+          error: 'sections_insert_failed',
+          durationMs: Date.now() - startTime,
+        },
+        userId,
+        supabase,
+      });
+
       return NextResponse.json({ error: 'Database error saving sections' }, { status: 500 });
     }
 
     await supabase.from('project_versions').update({ status: 'done' }).eq('id', versionRow.id);
+
+    await trackServerEvent({
+      event: 'generation_success',
+      properties: {
+        projectId: projectIdForTelemetry ?? null,
+        versionId: versionIdForTelemetry ?? null,
+        model,
+        durationMs: Date.now() - startTime,
+      },
+      userId,
+      supabase,
+    });
 
     return NextResponse.json({
       ...sanitizedPlan,
@@ -347,6 +485,20 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error generating plan:', error);
+
+    await trackServerEvent({
+      event: 'generation_failed',
+      properties: {
+        projectId: projectIdForTelemetry ?? null,
+        versionId: versionIdForTelemetry ?? null,
+        model,
+        error: error instanceof Error ? error.message : 'unknown_error',
+        durationMs: Date.now() - startTime,
+      },
+      userId,
+      supabase,
+    });
+
     return NextResponse.json({ error: 'Failed to generate plan' }, { status: 500 });
   }
 }
