@@ -183,21 +183,108 @@ export async function POST(req: Request) {
 
     const sanitizedPlan = sanitizePlan(parsedPlan);
 
-    const { data: project, error: dbError } = await supabase
+    // Create project
+    const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({
         user_id: user.id,
-        business_data: sanitizedPlan,
+        title: idea?.slice(0, 80) || 'پروژه جدید',
+        inputs: parsedBody.data,
       })
-      .select()
+      .select('id')
       .single();
 
-    if (dbError) {
-      console.error('Database Error:', dbError);
-      return NextResponse.json({ error: 'Failed to save project' }, { status: 500 });
+    if (projectError || !project) {
+      console.error('Database Error (project):', projectError);
+      return NextResponse.json({ error: 'ثبت پروژه ناموفق بود.' }, { status: 500 });
     }
 
-    return NextResponse.json({ ...sanitizedPlan, projectId: project.id });
+    // Determine next version
+    const { data: latestVersion, error: versionLookupError } = await supabase
+      .from('project_versions')
+      .select('version')
+      .eq('project_id', project.id)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (versionLookupError) {
+      console.error('Database Error (version lookup):', versionLookupError);
+      return NextResponse.json({ error: 'ثبت نسخه ناموفق بود.' }, { status: 500 });
+    }
+
+    const nextVersion = latestVersion?.version ? latestVersion.version + 1 : 1;
+
+    const { data: versionRow, error: versionInsertError } = await supabase
+      .from('project_versions')
+      .insert({
+        project_id: project.id,
+        version: nextVersion,
+        status: 'generating',
+        model,
+      })
+      .select('id')
+      .single();
+
+    if (versionInsertError || !versionRow) {
+      console.error('Database Error (version insert):', versionInsertError);
+      return NextResponse.json({ error: 'ثبت نسخه ناموفق بود.' }, { status: 500 });
+    }
+
+    // Split into sections
+    const sections = [
+      {
+        section_key: 'identity',
+        content: {
+          businessName: sanitizedPlan.businessName,
+          tagline: sanitizedPlan.tagline,
+          summary: sanitizedPlan.summary,
+        },
+      },
+      {
+        section_key: 'branding',
+        content: {
+          colorPalette: sanitizedPlan.colorPalette,
+          logoSVG: sanitizedPlan.logoSVG,
+        },
+      },
+      {
+        section_key: 'landing',
+        content: {
+          landingPageCopy: sanitizedPlan.landingPageCopy,
+        },
+      },
+      {
+        section_key: 'lean_canvas',
+        content: {
+          leanCanvas: sanitizedPlan.leanCanvas,
+        },
+      },
+      {
+        section_key: 'roadmap',
+        content: {
+          roadmap: sanitizedPlan.roadmap,
+          marketingSteps: sanitizedPlan.marketingSteps,
+        },
+      },
+    ];
+
+    const { error: sectionsError } = await supabase
+      .from('project_sections')
+      .insert(sections.map((s) => ({ ...s, version_id: versionRow.id })));
+
+    if (sectionsError) {
+      console.error('Database Error (sections insert):', sectionsError);
+      await supabase
+        .from('project_versions')
+        .update({ status: 'failed', error: sectionsError.message })
+        .eq('id', versionRow.id);
+      return NextResponse.json({ error: 'ثبت بخش‌ها ناموفق بود.' }, { status: 500 });
+    }
+
+    await supabase.from('project_versions').update({ status: 'done' }).eq('id', versionRow.id);
+
+    return NextResponse.json({ ...sanitizedPlan, projectId: project.id, versionId: versionRow.id });
   } catch (error) {
     console.error('Error generating plan:', error);
     return NextResponse.json(
