@@ -38,7 +38,15 @@ export async function signup(prevState: AuthFormState, formData: FormData): Prom
   const full_name = String(formData.get('full_name')).trim();
   const token = String(formData.get('cf-turnstile-response') || '');
 
-  // 1. Verify Turnstile
+  // 1. Validate Inputs
+  if (!email || !password || !full_name) {
+    return { error: 'لطفا تمام فیلدها را پر کنید' };
+  }
+  if (password.length < 8) {
+    return { error: 'رمز عبور باید حداقل ۸ کاراکتر باشد' };
+  }
+
+  // 2. Verify Turnstile
   const isHuman = await verifyTurnstileToken(token);
   if (!isHuman) {
     return { error: 'لطفا تایید کنید که ربات نیستید' };
