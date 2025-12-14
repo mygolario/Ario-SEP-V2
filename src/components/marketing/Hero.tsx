@@ -10,7 +10,8 @@ export function Hero({ ctaHref }: HeroProps) {
   return (
     <section className="relative overflow-hidden pt-20 pb-32">
       {/* Background Gradients - Light Premium */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,hsl(var(--background)),hsl(var(--muted)/0.3))]" />
+      {/* Background Gradients - Light Premium */}
+      <div className="absolute inset-0 -z-10 bg-background" />
       <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute -right-20 bottom-20 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
 
