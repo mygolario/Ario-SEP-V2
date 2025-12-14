@@ -15,7 +15,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 bg-background">
+    <section id="how-it-works" className="py-24 bg-background border-t border-slate-50">
       <div className="mx-auto w-full max-w-6xl px-4 text-right" dir="rtl">
         <div className="flex flex-col gap-3 mb-16 items-center md:items-start text-center md:text-right">
           <p className="text-sm font-bold uppercase tracking-wider text-primary">روند کار</p>
