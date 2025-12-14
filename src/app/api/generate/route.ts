@@ -7,6 +7,8 @@ import { trackServerEvent } from '@/lib/telemetry/trackServerEvent';
 import { BusinessPlanV1Schema } from '@/lib/validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import { createClient } from '@/utils/supabase/server';
+import { JourneyEngine, hydrateContent } from '@/lib/journey/engine';
+import { UserProfile } from '@/types/businessPlan';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +33,11 @@ const generationInputSchema = z.object({
   budget: z.string().min(1, 'budget is required'),
   goal: z.string().min(1, 'goal is required'),
   projectId: z.string().uuid().optional(),
+  // Phase 6
+  industry: z.string().optional(),
+  city: z.string().optional(),
+  timeline: z.string().optional(),
+  skills: z.array(z.string()).optional(),
 });
 
 const systemPrompt = `
@@ -156,8 +163,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const { idea, audience, vibe, budget, goal, projectId } = parsedBody.data;
+    const { idea, audience, vibe, budget, goal, projectId, industry, city, timeline, skills } =
+      parsedBody.data;
     projectIdForTelemetry = projectId ?? undefined;
+
+    // Phase 6: Journey Engine Setup
+    // We prepare this early but hydrate it after we get the main plan (for business name etc)
+    // Map industry to keys
+    let mappedIndustry = industry || 'general';
+    if (industry?.includes('Ecommerce')) mappedIndustry = 'ecommerce';
+    else if (industry?.includes('Service')) mappedIndustry = 'service';
+    else if (industry?.includes('Tech')) mappedIndustry = 'tech';
+    else if (industry?.includes('Education')) mappedIndustry = 'education';
+
+    const userProfile: UserProfile = {
+      industry: mappedIndustry,
+      city: city || 'tehran',
+      budget: budget,
+      timeline: timeline || 'asap',
+      skills: skills || [],
+      goal: goal,
+    };
+    const engine = new JourneyEngine();
+    // We generate the structure now, deterministic based on inputs (or random seed if we prefer uniqueness)
+    // Engine uses internal seed.
+    const journeyPlan = engine.generate(userProfile);
 
     const { data: limitRow, error: limitError } = await supabase
       .rpc('check_and_increment_daily', {
@@ -307,6 +337,21 @@ export async function POST(req: Request) {
 
     const sanitizedPlan = sanitizePlan(parsedPlan);
 
+    // Phase 6: Hydrate Journey Content
+    journeyPlan.sections.forEach((section) => {
+      section.blocks.forEach((block) => {
+        block.content = hydrateContent(block.content, {
+          businessName: sanitizedPlan.businessName,
+          industry: userProfile.industry === 'general' ? 'کسب‌وکار شما' : userProfile.industry,
+          uniqueValue: sanitizedPlan.onePagePlan?.uniqueValue || 'ارزش پیشنهادی منحصر به فرد',
+          audience: audience,
+          businessModel: sanitizedPlan.onePagePlan?.businessModel || 'مدل کسب‌وکار',
+          timeline: userProfile.timeline === 'asap' ? 'سه ماه آینده' : userProfile.timeline,
+          budget: budget,
+        });
+      });
+    });
+
     if (!sanitizedPlan.onePagePlan) {
       await trackServerEvent({
         event: 'generation_failed',
@@ -443,6 +488,11 @@ export async function POST(req: Request) {
       {
         section_key: 'one_page_plan',
         content: sanitizedPlan.onePagePlan,
+      },
+      // Phase 6
+      {
+        section_key: 'journey',
+        content: journeyPlan,
       },
     ];
 

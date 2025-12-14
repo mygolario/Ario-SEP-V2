@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
-import Image from 'next/image';
+import { Logo } from '@/components/brand/Logo';
 
 type NavbarProps = {
   ctaHref: string;
@@ -15,13 +15,7 @@ export function Navbar({ ctaHref }: NavbarProps) {
         dir="rtl"
       >
         <Link href="/" className="flex items-center gap-3 text-right">
-          <div className="relative h-10 w-10 overflow-hidden rounded-2xl shadow-lg shadow-primary/20">
-            <Image src="/logo.png" alt="Karnex" fill className="object-cover" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-xl font-black text-foreground tracking-tight">کارنکس</div>
-            <div className="text-[10px] font-medium text-muted-foreground">نسخه بتا | Karnex</div>
-          </div>
+          <Logo showText size={40} />
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">

@@ -90,5 +90,12 @@ export default async function DashboardPage({
     }
   }
 
-  return <DashboardClient initialData={projectData} projectId={projectId} versionId={versionId} />;
+  return (
+    <DashboardClient
+      initialData={projectData}
+      projectId={projectId}
+      versionId={versionId}
+      userId={user.id}
+    />
+  );
 }

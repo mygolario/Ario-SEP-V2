@@ -1,9 +1,11 @@
 import AuthLayout from '@/components/auth/AuthLayout';
 import Link from 'next/link';
+import { TrackSignup } from '@/components/analytics/TrackSignup';
 
 export default function VerifyEmailPage() {
   return (
     <AuthLayout>
+      <TrackSignup />
       <div className="text-center mb-8 dir-rtl">
         <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
           <svg

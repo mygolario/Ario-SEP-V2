@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { ENV } from '@/env';
 import { verifyTurnstileToken } from '@/lib/turnstile';
-import { sendEmail } from '@/lib/brevo';
+import { sendEmail, EMAIL_TEMPLATES } from '@/lib/brevo';
 
 export type AuthFormState = {
   error?: string;
@@ -28,7 +28,7 @@ export async function login(prevState: AuthFormState, formData: FormData): Promi
     return { error: 'خطای غیرمنتظره رخ داده است' };
   }
 
-  return redirect('/dashboard');
+  return redirect('/dashboard?login=success');
 }
 
 export async function signup(prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -68,8 +68,8 @@ export async function signup(prevState: AuthFormState, formData: FormData): Prom
     // We don't block on this
     sendEmail({
       to: data.user.email,
-      subject: 'به کارنکس خوش آمدید',
-      htmlContent: `<div dir="rtl" style="font-family: Tahoma">سلام ${full_name} عزیز،<br>به کارنکس خوش آمدید.</div>`,
+      subject: 'به کارنکس خوش آمدید | Karnex',
+      htmlContent: EMAIL_TEMPLATES.welcome(full_name),
     }).catch(console.error);
   }
 

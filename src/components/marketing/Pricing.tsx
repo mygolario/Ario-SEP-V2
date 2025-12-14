@@ -1,7 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BadgeCheck, Check } from 'lucide-react';
+import { analytics, AnalyticsEvents } from '@/lib/analytics';
+import { useEffect } from 'react';
 
 type PricingProps = {
   ctaHref: string;
@@ -16,6 +20,15 @@ const benefits = [
 ];
 
 export function Pricing({ ctaHref }: PricingProps) {
+  useEffect(() => {
+    analytics.track(AnalyticsEvents.PRICING_VIEWED);
+  }, []);
+
+  const handleCtaClick = () => {
+    analytics.track(AnalyticsEvents.UPGRADE_CLICKED);
+    analytics.track(AnalyticsEvents.CHECKOUT_STARTED);
+  };
+
   return (
     <section id="pricing" className="py-24 bg-background border-t border-slate-50">
       <div className="mx-auto w-full max-w-6xl px-4 text-right" dir="rtl">
@@ -61,7 +74,7 @@ export function Pricing({ ctaHref }: PricingProps) {
                 پرداخت از طریق درگاه‌های ایرانی؛ لغو اشتراک هر زمان ممکن است.
               </div>
 
-              <Link href={ctaHref}>
+              <Link href={ctaHref} onClick={handleCtaClick}>
                 <Button className="mt-2 h-14 w-full rounded-2xl bg-white text-primary hover:bg-white/90 font-black text-lg shadow-sm transition-transform hover:scale-[1.02]">
                   ورود / شروع استفاده
                 </Button>

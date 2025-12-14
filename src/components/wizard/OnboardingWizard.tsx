@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -11,7 +10,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { analytics, AnalyticsEvents } from '@/lib/analytics';
 
+// Steps Configuration
 // Steps Configuration
 const STEPS = [
   {
@@ -19,36 +20,64 @@ const STEPS = [
     title: 'ایده رویایی شما چیست؟',
     placeholder: 'مثلا: می‌خواهم یک سایت فروش لباس...',
     type: 'textarea',
-    field: 'idea'
+    field: 'idea',
   },
   {
     id: 2,
-    title: 'مخاطب شما کیست؟',
-    placeholder: 'مثلا: دانشجویان علاقه مند به تکنولوژی...',
-    type: 'input',
-    field: 'audience'
+    title: 'در چه حوزه‌ای فعالیت می‌کنید؟',
+    type: 'radio',
+    field: 'industry',
+    options: ['فروشگاهی (Ecommerce)', 'خدماتی (Service)', 'آموزشی (Education)', 'تکنولوژی (Tech)'],
   },
   {
     id: 3,
-    title: 'حس و حال برند شما؟',
-    type: 'radio',
-    field: 'vibe',
-    options: ['مینیمال و ساده', 'لوکس و سنگین', 'پرانرژی']
+    title: 'مخاطب شما کیست؟',
+    placeholder: 'مثلا: دانشجویان علاقه مند به تکنولوژی...',
+    type: 'input',
+    field: 'audience',
   },
   {
     id: 4,
-    title: 'بودجه شروع کار؟',
-    type: 'radio',
-    field: 'budget',
-    options: ['کم (کمتر از ۱۰ میلیون)', 'متوسط', 'زیاد (سرمایه دارم)']
+    title: 'شهر محل فعالیت؟',
+    placeholder: 'مثلا: تهران',
+    type: 'input',
+    field: 'city',
   },
   {
     id: 5,
+    title: 'حس و حال برند شما؟',
+    type: 'radio',
+    field: 'vibe',
+    options: ['مینیمال و ساده', 'لوکس و سنگین', 'پرانرژی'],
+  },
+  {
+    id: 6,
+    title: 'بودجه شروع کار؟',
+    type: 'radio',
+    field: 'budget',
+    options: ['کم (کمتر از ۱۰ میلیون)', 'متوسط', 'زیاد (سرمایه دارم)'],
+  },
+  {
+    id: 7,
+    title: 'زمان‌بندی مورد انتظار؟',
+    type: 'radio',
+    field: 'timeline',
+    options: ['عجله دارم (۳ ماه)', 'استاندارد (۶ ماه)', 'بلندمدت (۱ سال)'],
+  },
+  {
+    id: 8,
+    title: 'مهارت‌های تیم شما؟',
+    placeholder: 'مثلا: برنامه نویسی، بازاریابی (با کاما جدا کنید)',
+    type: 'input',
+    field: 'skills',
+  },
+  {
+    id: 9,
     title: 'هدف اصلی؟',
     type: 'radio',
     field: 'goal',
-    options: ['فروش سریع', 'جذب سرمایه‌گذار', 'تست بازار']
-  }
+    options: ['فروش سریع', 'جذب سرمایه‌گذار', 'تست بازار'],
+  },
 ];
 
 // Animation Variants for RTL
@@ -70,14 +99,18 @@ const variants = {
 export function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState(0); 
+  const [direction, setDirection] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState({
     idea: '',
     audience: '',
     vibe: '',
     budget: '',
-    goal: ''
+    goal: '',
+    industry: '',
+    city: '',
+    timeline: '',
+    skills: '',
   });
 
   const currentStep = STEPS[step];
@@ -98,82 +131,92 @@ export function OnboardingWizard() {
   const handleBack = () => {
     console.log('Back clicked. Current step:', step);
     if (step > 0) {
-      setDirection(1); 
+      setDirection(1);
       setStep(step - 1);
     }
   };
 
   const updateField = (value: string) => {
-    setFormData(prev => ({ ...prev, [currentStep.field]: value }));
+    setFormData((prev) => ({ ...prev, [currentStep.field]: value }));
   };
 
   const handleFinish = async () => {
-      setIsGenerating(true);
-      try {
-          const response = await fetch('/api/generate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(formData)
-          });
+    setIsGenerating(true);
+    try {
+      const payload = {
+        ...formData,
+        skills: formData.skills ? formData.skills.split(',').map((s) => s.trim()) : [],
+      };
 
-          if (!response.ok) {
-              if (response.status === 401) {
-                  // If unauthorized, maybe redirect to login or show error?
-                  // For now, assuming middleware handles general protection, 
-                  // but specific API call might fail if session expired.
-                  router.push('/login');
-                  return;
-              }
-              throw new Error('Failed to generate plan');
-          }
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-          await response.json();
-          // Data is now saved in DB by the API, so we just redirect.
-          router.push('/dashboard');
-
-      } catch (error) {
-          console.error(error);
-          setIsGenerating(false);
-          // Ideally show a toast error here
+      if (!response.ok) {
+        if (response.status === 401) {
+          // If unauthorized, maybe redirect to login or show error?
+          // For now, assuming middleware handles general protection,
+          // but specific API call might fail if session expired.
+          router.push('/login');
+          return;
+        }
+        throw new Error('Failed to generate plan');
       }
+
+      await response.json();
+      analytics.track(AnalyticsEvents.PROJECT_CREATED);
+      // Data is now saved in DB by the API, so we just redirect.
+      router.push('/dashboard');
+    } catch (error) {
+      console.error(error);
+      setIsGenerating(false);
+      // Ideally show a toast error here
+    }
   };
 
   // Loading UI
   if (isGenerating) {
-      return (
-          <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-[400px] text-center space-y-8" dir="rtl">
-              <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
-                  <Loader2 className="h-16 w-16 text-primary animate-spin relative z-10" />
-              </div>
-              <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                    هوش مصنوعی در حال ساخت امپراتوری شماست...
-                  </h2>
-                  <p className="text-slate-500 animate-pulse">
-                    تحلیل بازار... طراحی لوگو... تدوین استراتژی...
-                  </p>
-              </div>
-          </div>
-      );
+    return (
+      <div
+        className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-[400px] text-center space-y-8"
+        dir="rtl"
+      >
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+          <Loader2 className="h-16 w-16 text-primary animate-spin relative z-10" />
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+            هوش مصنوعی در حال ساخت امپراتوری شماست...
+          </h2>
+          <p className="text-slate-500 animate-pulse">
+            تحلیل بازار... طراحی لوگو... تدوین استراتژی...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4" dir="rtl">
       <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-2xl">
         <CardHeader>
-           <div className="flex justify-between items-center text-sm text-slate-500 mb-2">
-             <span>مرحله {step + 1} از {STEPS.length}</span>
-             <span className="font-bold text-primary">بیزینس ساز هوشمند</span>
-           </div>
-           <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden" dir="ltr">
-             <motion.div 
-               className="h-full bg-primary"
-               initial={{ width: 0 }}
-               animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-               transition={{ duration: 0.3 }}
-             />
-           </div>
+          <div className="flex justify-between items-center text-sm text-slate-500 mb-2">
+            <span>
+              مرحله {step + 1} از {STEPS.length}
+            </span>
+            <span className="font-bold text-primary">بیزینس ساز هوشمند</span>
+          </div>
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden" dir="ltr">
+            <motion.div
+              className="h-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
         </CardHeader>
 
         <CardContent className="relative min-h-[300px] overflow-hidden p-6">
@@ -211,19 +254,19 @@ export function OnboardingWizard() {
               )}
 
               {currentStep.type === 'radio' && currentStep.options && (
-                <RadioGroup 
-                   value={formData[currentStep.field as keyof typeof formData]} 
-                   onValueChange={updateField}
-                   className="flex flex-col gap-3"
+                <RadioGroup
+                  value={formData[currentStep.field as keyof typeof formData]}
+                  onValueChange={updateField}
+                  className="flex flex-col gap-3"
                 >
                   {currentStep.options.map((option) => (
                     <div key={option} className="flex items-center space-x-reverse space-x-2">
                       <RadioGroupItem value={option} id={option} className="peer sr-only" />
-                      <Label 
+                      <Label
                         htmlFor={option}
                         className="flex-1 p-4 rounded-xl border border-slate-200 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-slate-50 cursor-pointer transition-all dark:border-slate-800 dark:hover:bg-slate-900"
                       >
-                         {option}
+                        {option}
                       </Label>
                     </div>
                   ))}
@@ -234,18 +277,18 @@ export function OnboardingWizard() {
         </CardContent>
 
         <CardFooter className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 p-6">
-          <Button 
+          <Button
             type="button"
-            variant="ghost" 
-            onClick={handleBack} 
+            variant="ghost"
+            onClick={handleBack}
             disabled={isFirstStep}
             className={`text-slate-500 hover:text-slate-900 ${isFirstStep ? 'opacity-0 pointer-events-none' : ''}`}
           >
             <ArrowRight className="ml-2 h-4 w-4" />
             قبلی
           </Button>
-          
-          <Button 
+
+          <Button
             type="button"
             onClick={handleNext}
             className="bg-slate-900 text-white hover:bg-slate-800 px-8"

@@ -2,6 +2,7 @@
 import * as Sentry from '@sentry/nextjs';
 import localFont from 'next/font/local';
 import { PHProvider } from './providers';
+import { ConsentBanner } from '@/components/analytics/ConsentBanner';
 import './globals.css';
 
 const vazirmatn = localFont({
@@ -30,6 +31,10 @@ export function generateMetadata(): Metadata {
     description:
       'کارنکس نسخه بتای ایرانی برای ساخت برنامه کسب‌وکار، چک‌لیست اقدام و برآورد مالی اولیه با تکیه بر داده‌های بومی و هوش مصنوعی.',
     metadataBase,
+    icons: {
+      icon: '/logo.png',
+      apple: '/logo.png',
+    },
     other: {
       ...Sentry.getTraceData(),
     },
@@ -44,7 +49,10 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body className={`${vazirmatn.className} antialiased`}>
-        <PHProvider>{children}</PHProvider>
+        <PHProvider>
+          {children}
+          <ConsentBanner />
+        </PHProvider>
       </body>
     </html>
   );
