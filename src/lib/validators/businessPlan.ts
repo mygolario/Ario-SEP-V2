@@ -74,6 +74,57 @@ export const onePagePlanSchema = z
   })
   .strict();
 
+// Phase 6: Journey Engine Schemas
+
+export const userProfileSchema = z.object({
+  industry: z.string().default('general'),
+  city: z.string().default('tehran'),
+  budget: z.string().default('unknown'),
+  timeline: z.string().default('asap'),
+  skills: z.array(z.string()).default([]),
+  goal: z.string().default('start'),
+});
+
+export const journeyBlockTypeSchema = z.enum([
+  'text',
+  'checklist',
+  'warning',
+  'tip',
+  'financial',
+  'legal',
+]);
+
+export const journeyBlockSchema = z.object({
+  id: z.string(),
+  type: journeyBlockTypeSchema,
+  title: z.string().optional(),
+  content: z.string(),
+  metadata: z
+    .object({
+      tags: z.array(z.string()).optional(),
+      weight: z.number().optional(),
+      source: z.string().optional(),
+      actionable: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+export const journeySectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  blocks: z.array(journeyBlockSchema),
+  isCollapsed: z.boolean().optional(),
+});
+
+export const journeyPlanSchema = z.object({
+  id: z.string(),
+  userProfile: userProfileSchema,
+  sections: z.array(journeySectionSchema),
+  createdAt: z.string(),
+  seed: z.number(),
+});
+
 export const BusinessPlanV1Schema = z
   .object({
     businessName: z.string().min(1, 'Business name is required'),
@@ -86,6 +137,8 @@ export const BusinessPlanV1Schema = z
     leanCanvas: leanCanvasSchema,
     roadmap: z.array(roadmapItemSchema).length(4),
     onePagePlan: onePagePlanSchema.optional(),
+    // Phase 6 Extension
+    journey: journeyPlanSchema.optional(),
   })
   .strict();
 
@@ -95,4 +148,8 @@ export type LandingPageCopy = z.infer<typeof landingPageCopySchema>;
 export type LeanCanvas = z.infer<typeof leanCanvasSchema>;
 export type RoadmapItem = z.infer<typeof roadmapItemSchema>;
 export type OnePagePlan = z.infer<typeof onePagePlanSchema>;
+export type UserProfile = z.infer<typeof userProfileSchema>;
+export type JourneyBlock = z.infer<typeof journeyBlockSchema>;
+export type JourneySection = z.infer<typeof journeySectionSchema>;
+export type JourneyPlan = z.infer<typeof journeyPlanSchema>;
 export type BusinessPlanV1 = z.infer<typeof BusinessPlanV1Schema>;

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, ExternalLink, ShieldCheck } from 'lucide-react';
+import { MessageCircle, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 
 type FooterProps = {
   supportTelegramUrl?: string;
@@ -9,26 +10,29 @@ type FooterProps = {
 
 export function Footer({ supportTelegramUrl, siteUrl }: FooterProps) {
   return (
-    <footer className="mt-24 border-t border-white/10 bg-slate-900/60">
+    <footer className="mt-24 border-t border-slate-50 bg-background">
       <div
-        className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-12 text-right text-slate-200 md:grid-cols-4"
+        className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-16 text-right text-muted-foreground md:grid-cols-4"
         dir="rtl"
       >
-        <div className="md:col-span-2 space-y-3">
-          <div className="flex items-center gap-2 text-emerald-200">
-            <ShieldCheck className="h-5 w-5" />
-            <span className="text-sm font-semibold">آریو - بتای بازار ایران</span>
+        <div className="md:col-span-2 space-y-4">
+          <div className="flex items-center gap-2 text-foreground">
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg">
+              <Image src="/logo.png" alt="Karnex" fill className="object-cover" />
+            </div>
+            <span className="text-lg font-black tracking-tight">کارنکس | Karnex</span>
           </div>
-          <p className="text-slate-400 leading-7">
-            آریو یک دستیار هوشمند برای تدوین برنامه کسب‌وکار، برآورد اولیه مالی و چک‌لیست اقدام است.
-            همه محتوا به فارسی و با در نظر گرفتن واقعیت‌های بازار ایران تولید می‌شود.
+          <p className="text-muted-foreground leading-8 text-sm">
+            کارنکس یک دستیار هوشمند برای تدوین برنامه کسب‌وکار، برآورد اولیه مالی و چک‌لیست اقدام
+            است. همه محتوا به فارسی و با در نظر گرفتن واقعیت‌های بازار ایران تولید می‌شود.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             {siteUrl && (
               <Button
                 asChild
                 variant="outline"
-                className="border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
+                size="sm"
+                className="bg-background text-foreground hover:bg-muted"
               >
                 <a href={siteUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="ml-2 h-4 w-4" />
@@ -39,7 +43,8 @@ export function Footer({ supportTelegramUrl, siteUrl }: FooterProps) {
             {supportTelegramUrl && (
               <Button
                 asChild
-                className="rounded-full bg-emerald-400 text-slate-900 hover:bg-emerald-300"
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <a href={supportTelegramUrl} target="_blank" rel="noreferrer">
                   <MessageCircle className="ml-2 h-4 w-4" />
@@ -50,49 +55,49 @@ export function Footer({ supportTelegramUrl, siteUrl }: FooterProps) {
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-white">مسیرها</div>
-          <ul className="space-y-2 text-sm text-slate-300">
+        <div className="space-y-4">
+          <div className="text-sm font-bold text-foreground">مسیرها</div>
+          <ul className="space-y-3 text-sm">
             <li>
-              <Link href="/" className="hover:text-emerald-300">
+              <Link href="/" className="hover:text-primary transition-colors">
                 صفحه اصلی
               </Link>
             </li>
             <li>
-              <Link href="/pricing" className="hover:text-emerald-300">
+              <Link href="/pricing" className="hover:text-primary transition-colors">
                 تعرفه‌ها
               </Link>
             </li>
             <li>
-              <Link href="/faq" className="hover:text-emerald-300">
+              <Link href="/faq" className="hover:text-primary transition-colors">
                 سوالات متداول
               </Link>
             </li>
           </ul>
         </div>
 
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-white">قوانین</div>
-          <ul className="space-y-2 text-sm text-slate-300">
+        <div className="space-y-4">
+          <div className="text-sm font-bold text-foreground">قوانین</div>
+          <ul className="space-y-3 text-sm">
             <li>
-              <Link href="/terms" className="hover:text-emerald-300">
+              <Link href="/terms" className="hover:text-primary transition-colors">
                 شرایط استفاده
               </Link>
             </li>
             <li>
-              <Link href="/privacy" className="hover:text-emerald-300">
+              <Link href="/privacy" className="hover:text-primary transition-colors">
                 حریم خصوصی
               </Link>
             </li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-white/10 bg-slate-950/50">
+      <div className="border-t border-slate-50 bg-background">
         <div
-          className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400"
+          className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6 text-xs text-muted-foreground"
           dir="rtl"
         >
-          <span>© {new Date().getFullYear()} آریو - کلیه حقوق محفوظ است.</span>
+          <span>© {new Date().getFullYear()} کارنکس - کلیه حقوق محفوظ است.</span>
           <span>ساخته شده با تمرکز بر بازار ایران</span>
         </div>
       </div>

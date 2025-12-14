@@ -20,9 +20,9 @@ export default async function MarketingLayout({ children }: { children: React.Re
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(34,211,238,0.08),transparent_30%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:28px_28px] opacity-30" />
+    <div className="relative min-h-screen bg-background text-foreground">
+      {/* Decorative background for Light Premium - subtle grain or gradient can be added here if needed, but keeping it clean white for now */}
+
       <div className="relative z-10">
         <Navbar ctaHref={ctaHref} />
         <main className="pt-10">{children}</main>

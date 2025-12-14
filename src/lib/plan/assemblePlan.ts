@@ -1,5 +1,9 @@
 import { sanitizeLogoSvg } from '../security/sanitizeSvg';
-import { BusinessPlanV1Schema, onePagePlanSchema } from '../validators/businessPlan';
+import {
+  BusinessPlanV1Schema,
+  onePagePlanSchema,
+  journeyPlanSchema,
+} from '../validators/businessPlan';
 import type { BusinessPlanV1 } from '@/types/businessPlan';
 import type { SectionKey } from '@/types/sections';
 
@@ -24,6 +28,7 @@ type SectionContentMap = {
     marketingSteps: BusinessPlanV1['marketingSteps'];
   };
   one_page_plan: NonNullable<BusinessPlanV1['onePagePlan']>;
+  journey?: NonNullable<BusinessPlanV1['journey']>;
 };
 
 type SectionRecord = {
@@ -51,6 +56,11 @@ export function assemblePlan(sections: SectionRecord[]): BusinessPlanV1 {
         throw parsedOnePage.error;
       }
       merged.one_page_plan = parsedOnePage.data;
+    } else if (section_key === 'journey') {
+      const parsedJourney = journeyPlanSchema.safeParse(content);
+      if (parsedJourney.success) {
+        merged.journey = parsedJourney.data;
+      }
     }
   });
 
@@ -65,6 +75,7 @@ export function assemblePlan(sections: SectionRecord[]): BusinessPlanV1 {
     roadmap: merged.roadmap?.roadmap,
     marketingSteps: merged.roadmap?.marketingSteps,
     onePagePlan: merged.one_page_plan,
+    journey: merged.journey,
   };
 
   const validation = BusinessPlanV1Schema.safeParse(planCandidate);
