@@ -31,6 +31,9 @@ export default function SignupForm() {
   const [state, formAction] = useFormState(signup, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [clientError, setClientError] = useState('');
 
   // Simple strength check
   const strength = {
@@ -48,11 +51,27 @@ export default function SignupForm() {
     return 'bg-green-500';
   };
 
+  const handleSubmit = (formData: FormData) => {
+    // Client-side validation
+    if (!fullName.trim() || !email.trim() || !password.trim()) {
+      setClientError('لطفا تمام فیلدها را پر کنید');
+      return;
+    }
+    if (password.length < 8) {
+      setClientError('رمز عبور باید حداقل ۸ کاراکتر باشد');
+      return;
+    }
+    setClientError('');
+    formAction(formData);
+  };
+
+  const displayError = clientError || state?.error;
+
   return (
-    <form action={formAction} className="space-y-6 w-full text-right" dir="rtl">
-      {state?.error && (
+    <form action={handleSubmit} className="space-y-6 w-full text-right" dir="rtl" noValidate>
+      {displayError && (
         <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm border border-red-200 animate-in slide-in-from-top-2">
-          {state.error}
+          {displayError}
         </div>
       )}
 
@@ -62,8 +81,9 @@ export default function SignupForm() {
           <Input
             name="full_name"
             type="text"
-            required
             placeholder="علی علوی"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
             className="h-12 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20 transition-all rounded-xl"
           />
         </div>
@@ -73,9 +93,10 @@ export default function SignupForm() {
           <Input
             name="email"
             type="email"
-            required
             placeholder="name@company.com"
             dir="ltr"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="h-12 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20 transition-all rounded-xl text-left"
           />
         </div>
@@ -86,7 +107,6 @@ export default function SignupForm() {
             <Input
               name="password"
               type={showPassword ? 'text' : 'password'}
-              required
               placeholder="••••••••"
               dir="ltr"
               value={password}
