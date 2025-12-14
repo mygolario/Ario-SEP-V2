@@ -300,4 +300,59 @@ export const EMAIL_TEMPLATES = {
           <p>امیدواریم این پاسخ برای شما راهگشا باشد. در صورت نیاز به راهنمایی بیشتر، همین ایمیل را پاسخ دهید.</p>
           `
     ),
+
+  weeklyOverview: (stats: { projects: number; tasksCompleted: number; daysActive: number }) =>
+    getHtmlTemplate(
+      'گزارش هفتگی شما در کارنکس',
+      `
+      <p>هفته پرباری داشته‌اید! نگاهی به عملکرد ۷ روز گذشته شما:</p>
+      
+      <div style="display: flex; gap: 10px; margin: 30px 0; justify-content: center;">
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 12px; text-align: center; flex: 1;">
+          <div style="font-size: 24px; font-weight: 800; color: #4f46e5;">${stats.projects}</div>
+          <div style="font-size: 12px; color: #64748b;">پروژه‌های فعال</div>
+        </div>
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 12px; text-align: center; flex: 1;">
+          <div style="font-size: 24px; font-weight: 800; color: #10b981;">${stats.tasksCompleted}</div>
+          <div style="font-size: 12px; color: #64748b;">وظایف تکمیل شده</div>
+        </div>
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 12px; text-align: center; flex: 1;">
+          <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">${stats.daysActive}</div>
+          <div style="font-size: 12px; color: #64748b;">روز فعالیت</div>
+        </div>
+      </div>
+
+      <p>آماده‌اید قدم بعدی را بردارید؟ ادامه دهید و به اهداف خود نزدیک‌تر شوید.</p>
+    `,
+      { text: 'مشاهده داشبورد', url: 'https://karnex.ir/dashboard' }
+    ),
+
+  inactivityReminder: (days: number) =>
+    getHtmlTemplate(
+      'دلمان برایتان تنگ شده!',
+      `
+      <p>حدود ${days} روز است که به پروژه خود سر نزده‌اید.</p>
+      <p>رقیبان شما در حال پیشرفت هستند. ایده شما پتانسیل بالایی دارد، حیف است که نیمه‌کاره بماند.</p>
+      <div class="support-box" style="border-right-color: #f59e0b; background-color: #fffbeb;">
+        <strong>🚀 پیشنهاد ما:</strong>
+        <br/>
+        فقط ۵ دقیقه وقت بگذارید و یکی از کارهای کوچک لیست خود را انجام دهید. همین قدم کوچک انگیزه شما را برمی‌گرداند.
+      </div>
+    `,
+      { text: 'بازگشت به پروژه', url: 'https://karnex.ir/dashboard' }
+    ),
+
+  adminAlert: (type: 'NEW_USER' | 'PAYMENT' | 'System', details: string) =>
+    getHtmlTemplate(
+      `🔔 هشدار سیستم: ${type}`,
+      `
+      <div class="ticket-badge" style="background-color: #fee2e2; color: #991b1b;">ADMIN ALERT</div>
+      <p>یک رویداد جدید در سیستم ثبت شد:</p>
+      <div style="background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; font-family: monospace; direction: ltr; text-align: left; font-size: 13px;">
+${details}
+      </div>
+      <p>لطفا در صورت نیاز بررسی لازم را انجام دهید.</p>
+    `,
+      { text: 'پنل مدیریت', url: 'https://karnex.ir/admin' }
+    ),
 };

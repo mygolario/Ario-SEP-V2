@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
+import { ROUTES } from '@/lib/constants';
 
 type NavbarProps = {
   ctaHref: string;
@@ -14,7 +15,7 @@ export function Navbar({ ctaHref }: NavbarProps) {
         className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4"
         dir="rtl"
       >
-        <Link href="/" className="flex items-center gap-3 text-right">
+        <Link href={ROUTES.home} className="flex items-center gap-3 text-right">
           <Logo showText size={40} />
         </Link>
 

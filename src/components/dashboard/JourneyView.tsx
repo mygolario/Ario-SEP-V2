@@ -34,7 +34,7 @@ export function JourneyView({ journey }: JourneyViewProps) {
   const handleRegenerate = (sectionId: string) => {
     analytics.track('section_regenerated', { sectionId });
     // TODO: Implement actual regeneration logic (server action preferred)
-    alert('قابلیت بازتولید بخش در فاز بعدی فعال خواهد شد.');
+    console.log('قابلیت بازتولید بخش در فاز بعدی فعال خواهد شد.');
   };
 
   const handleExport = () => {
@@ -65,7 +65,7 @@ export function JourneyView({ journey }: JourneyViewProps) {
       </div>
 
       {/* Sections */}
-      <div className="space-y-6">
+      <div className="space-y-6" id="journey-block-list">
         {sections.map((section) => (
           <div
             key={section.id}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/brand/Logo';
+import { ROUTES } from '@/lib/constants';
 import {
   LayoutDashboard,
   LayoutTemplate,
@@ -23,7 +24,7 @@ import {
 const MENU_ITEMS = [
   {
     title: 'نمای کلی',
-    href: '/dashboard',
+    href: ROUTES.dashboard.home,
     icon: LayoutDashboard,
     exact: true,
   },
@@ -84,7 +85,7 @@ const MENU_ITEMS = [
   },
   {
     title: 'تنظیمات',
-    href: '/dashboard/settings',
+    href: ROUTES.dashboard.settings,
     icon: Settings,
   },
 ];
@@ -117,7 +118,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         dir="rtl"
       >
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <Link href="/dashboard">
+          <Link href="/dashboard" id="sidebar-logo">
             <Logo showText size={32} />
           </Link>
           {/* Mobile Close Button */}
@@ -139,6 +140,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
               <Link
                 key={item.href}
                 href={item.href}
+                id={`nav-${item.href.replace(/\//g, '-').replace(/^-/, '')}`}
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-medium',
                   isActive

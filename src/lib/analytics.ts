@@ -14,6 +14,11 @@ export const AnalyticsEvents = {
   MODULE_TOGGLED: 'module_toggled',
   SECTION_REGENERATED: 'section_regenerated',
   OUTPUT_EXPORTED: 'output_exported',
+  // Phase 10
+  PLAYBOOK_OPENED: 'playbook_opened',
+  DEPTH_CHANGED: 'depth_changed',
+  TEMPLATE_COPIED: 'template_copied',
+  STEP_CHECKED: 'step_checked',
 } as const;
 
 export const analytics = {
