@@ -204,7 +204,7 @@ export async function POST(req: Request) {
     const { data: limitRow, error: limitError } = await supabase
       .rpc('check_and_increment_daily', {
         kind: 'generate',
-        limit: GENERATE_DAILY_LIMIT,
+        p_limit: GENERATE_DAILY_LIMIT,
       })
       .single<LimitCheckResult>();
 
