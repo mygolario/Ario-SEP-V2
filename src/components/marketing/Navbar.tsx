@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 type NavbarProps = {
   ctaHref: string;
@@ -14,8 +15,8 @@ export function Navbar({ ctaHref }: NavbarProps) {
         dir="rtl"
       >
         <Link href="/" className="flex items-center gap-3 text-right">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Sparkles className="h-5 w-5" />
+          <div className="relative h-10 w-10 overflow-hidden rounded-2xl shadow-lg shadow-primary/20">
+            <Image src="/logo.png" alt="Karnex" fill className="object-cover" />
           </div>
           <div className="leading-tight">
             <div className="text-xl font-black text-foreground tracking-tight">کارنکس</div>

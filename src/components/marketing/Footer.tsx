@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, ExternalLink, ShieldCheck } from 'lucide-react';
+import { MessageCircle, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 
 type FooterProps = {
   supportTelegramUrl?: string;
@@ -16,7 +17,9 @@ export function Footer({ supportTelegramUrl, siteUrl }: FooterProps) {
       >
         <div className="md:col-span-2 space-y-4">
           <div className="flex items-center gap-2 text-foreground">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg">
+              <Image src="/logo.png" alt="Karnex" fill className="object-cover" />
+            </div>
             <span className="text-lg font-black tracking-tight">کارنکس | Karnex</span>
           </div>
           <p className="text-muted-foreground leading-8 text-sm">
