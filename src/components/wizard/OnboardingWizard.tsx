@@ -117,7 +117,17 @@ export function OnboardingWizard() {
   const isFirstStep = step === 0;
   const isLastStep = step === STEPS.length - 1;
 
+  const isStepValid = () => {
+    const value = formData[currentStep.field as keyof typeof formData];
+    // Optional fields
+    if (currentStep.field === 'skills') return true;
+    // Required fields check
+    return value && value.trim().length > 0;
+  };
+
   const handleNext = async () => {
+    if (!isStepValid()) return;
+
     console.log('Next clicked. Current step:', step);
     if (step < STEPS.length - 1) {
       setDirection(-1);
@@ -143,9 +153,20 @@ export function OnboardingWizard() {
   const handleFinish = async () => {
     setIsGenerating(true);
     try {
+      // Clean up payload: Convert empty strings to undefined for optional fields
+      // But for required fields, they should be present (guaranteed by isStepValid if wizard used sequentially)
+      const cleanData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [key, value === '' ? undefined : value])
+      );
+
       const payload = {
-        ...formData,
-        skills: formData.skills ? formData.skills.split(',').map((s) => s.trim()) : [],
+        ...cleanData,
+        skills: formData.skills
+          ? formData.skills
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
       };
 
       const response = await fetch('/api/generate', {
@@ -155,24 +176,25 @@ export function OnboardingWizard() {
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Generation failed:', errorData);
         if (response.status === 401) {
-          // If unauthorized, maybe redirect to login or show error?
-          // For now, assuming middleware handles general protection,
-          // but specific API call might fail if session expired.
           router.push('/login');
           return;
         }
-        throw new Error('Failed to generate plan');
+        throw new Error(errorData.error || 'Failed to generate plan');
       }
 
-      await response.json();
+      const result = await response.json();
+      console.log('Generation success:', result);
+
       analytics.track(AnalyticsEvents.PROJECT_CREATED);
-      // Data is now saved in DB by the API, so we just redirect.
-      router.push('/dashboard');
+      router.push(`/dashboard?projectId=${result.projectId}`);
     } catch (error) {
       console.error(error);
       setIsGenerating(false);
       // Ideally show a toast error here
+      alert('خطا در هوش مصنوعی: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -248,7 +270,7 @@ export function OnboardingWizard() {
                 <Input
                   placeholder={currentStep.placeholder}
                   className="rounded-xl border-slate-300 h-12 text-lg px-4 focus-visible:ring-primary"
-                  value={formData.audience}
+                  value={formData[currentStep.field as keyof typeof formData]}
                   onChange={(e) => updateField(e.target.value)}
                 />
               )}
@@ -291,7 +313,8 @@ export function OnboardingWizard() {
           <Button
             type="button"
             onClick={handleNext}
-            className="bg-slate-900 text-white hover:bg-slate-800 px-8"
+            disabled={!isStepValid()}
+            className={`px-8 ${!isStepValid() ? 'opacity-50 cursor-not-allowed bg-slate-400' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
           >
             {isLastStep ? 'شروع ساخت' : 'بعدی'}
             {!isLastStep && <ArrowLeft className="mr-2 h-4 w-4" />}

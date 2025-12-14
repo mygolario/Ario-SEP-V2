@@ -140,6 +140,8 @@ export async function POST(req: Request) {
   let projectIdForTelemetry: string | undefined;
   let versionIdForTelemetry: string | undefined;
 
+  console.log('[Generate API] Started', { method: req.method });
+
   try {
     const {
       data: { user },
@@ -147,9 +149,19 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.error('User not authenticated:', authError);
+      console.error('[Generate API] Auth failed or missing user', authError);
       return NextResponse.json({ error: 'Unauthorized: User not logged in' }, { status: 401 });
     }
+    console.log('[Generate API] User authenticated', { userId: user.id });
+
+    // Debug OpenRouter Key presence (don't log the key itself!)
+    if (!process.env.OPENROUTER_API_KEY) console.error('[Generate API] Missing OPENROUTER_API_KEY');
+    else
+      console.log(
+        '[Generate API] Has OPENROUTER_API_KEY length:',
+        process.env.OPENROUTER_API_KEY.length
+      );
+    console.log('[Generate API] Using Model:', process.env.OPENROUTER_MODEL ?? 'DEFAULT_FALLBACK');
 
     userId = user.id;
 
@@ -257,6 +269,8 @@ export async function POST(req: Request) {
       apiKey,
       baseURL: 'https://openrouter.ai/api/v1',
     });
+
+    console.log('[Generate API] Sending request to OpenRouter...', { model });
 
     const completion = await openai.chat.completions.create({
       model,
@@ -537,13 +551,20 @@ export async function POST(req: Request) {
       supabase,
     });
 
+    console.log('[Generate API] Success. Returning JSON.');
+
     return NextResponse.json({
       ...sanitizedPlan,
       projectId: projectIdToUse,
       versionId: versionRow.id,
     });
   } catch (error) {
-    console.error('Error generating plan:', error);
+    console.error('[Generate API] CRITICAL FAILURE:', error);
+    if (error instanceof Error) {
+      console.error('Error Name:', error.name);
+      console.error('Error Message:', error.message);
+      console.error('Error Stack:', error.stack);
+    }
 
     await trackServerEvent({
       event: 'generation_failed',
