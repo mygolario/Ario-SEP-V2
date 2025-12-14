@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const faqs = [
   {
-    question: 'آریو برای چه مرحله‌ای مناسب است؟',
+    question: 'کارنکس برای چه مرحله‌ای مناسب است؟',
     answer:
       'برای استارتاپ‌های اولیه، کسب‌وکارهای کوچک و تیم‌هایی که می‌خواهند نسخه اول پلن یا بیزینس کیس داخلی را سریع آماده کنند.',
   },
@@ -41,23 +41,30 @@ export function FAQ({ compact }: FAQProps) {
   const items = compact ? faqs.slice(0, 4) : faqs;
 
   return (
-    <section id="faq" className="pt-16">
+    <section id="faq" className="py-24 bg-muted/30">
       <div className="mx-auto w-full max-w-6xl px-4 text-right" dir="rtl">
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold text-emerald-200">سوالات متداول</p>
-          <h2 className="text-3xl font-black text-white">پاسخ روشن به دغدغه‌های اصلی</h2>
-          <p className="max-w-2xl text-slate-300">
+        <div className="mb-16 text-center md:text-right">
+          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-primary">
+            سوالات متداول
+          </p>
+          <h2 className="text-3xl font-black text-foreground md:text-4xl">
+            پاسخ روشن به دغدغه‌های اصلی
+          </h2>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
             اگر سوال دیگری دارید، پشتیبانی تلگرام در ساعات کاری پاسخگوست.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           {items.map((item) => (
-            <Card key={item.question} className="border-white/10 bg-white/5 text-slate-100">
+            <Card
+              key={item.question}
+              className="border-border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow"
+            >
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-white">{item.question}</CardTitle>
+                <CardTitle className="text-lg font-bold text-foreground">{item.question}</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm leading-7 text-slate-200">{item.answer}</CardContent>
+              <CardContent className="text-muted-foreground leading-7">{item.answer}</CardContent>
             </Card>
           ))}
         </div>
