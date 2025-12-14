@@ -9,7 +9,7 @@ type FooterProps = {
 
 export function Footer({ supportTelegramUrl, siteUrl }: FooterProps) {
   return (
-    <footer className="mt-24 border-t border-border bg-muted/30">
+    <footer className="mt-24 border-t border-slate-50 bg-background">
       <div
         className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-16 text-right text-muted-foreground md:grid-cols-4"
         dir="rtl"
@@ -89,7 +89,7 @@ export function Footer({ supportTelegramUrl, siteUrl }: FooterProps) {
           </ul>
         </div>
       </div>
-      <div className="border-t border-border bg-muted/50">
+      <div className="border-t border-slate-50 bg-background">
         <div
           className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6 text-xs text-muted-foreground"
           dir="rtl"
