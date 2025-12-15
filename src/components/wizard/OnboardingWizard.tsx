@@ -189,7 +189,7 @@ export function OnboardingWizard() {
       console.log('Generation success:', result);
 
       analytics.track(AnalyticsEvents.PROJECT_CREATED);
-      router.push(`/dashboard?projectId=${result.projectId}`);
+      router.push(`/dashboard-v2/projects/${result.projectId}`);
     } catch (error) {
       console.error(error);
       setIsGenerating(false);

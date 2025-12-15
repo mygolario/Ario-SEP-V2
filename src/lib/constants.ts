@@ -9,9 +9,9 @@ export const ROUTES = {
   login: '/login',
   signup: '/signup',
   dashboard: {
-    home: '/dashboard',
-    settings: '/dashboard/settings',
-    history: '/dashboard/history',
+    home: '/dashboard-v2',
+    settings: '/dashboard-v2/settings',
+    history: '/dashboard-v2/history',
   },
   auth: {
     verifyEmail: '/auth/verify-email',

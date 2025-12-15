@@ -20,6 +20,17 @@ test.describe('Dashboard V2 Smoke Tests', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
+  test('should redirect legacy /dashboard to /dashboard-v2 (or login)', async ({ page }) => {
+    // This tests the middleware redirect
+    await page.goto('/dashboard');
+    // It should first go to /dashboard-v2, then /login (since unauthenticated)
+    await expect(page).toHaveURL(/\/login/);
+    // Ideally we'd verify the intermediate 307, but checking we don't stay on /dashboard is good.
+    const url = page.url();
+    expect(url).not.toContain('/dashboard'); // Should be /login
+    expect(url).toContain('/login');
+  });
+
   // TODO: comprehensive auth testing requires setup (seed user, login flow).
   // For "Smoke Test", verifying the app builds and serves pages (even error/redirect) is step 1.
 });

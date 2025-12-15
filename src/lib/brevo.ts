@@ -236,7 +236,7 @@ const getHtmlTemplate = (
         <p>این ایمیل برای اطلاع‌رسانی به شما ارسال شده است.</p>
         <div class="footer-links">
           <a href="https://karnex.ir">وب‌سایت</a> • 
-          <a href="https://karnex.ir/dashboard">داشبورد</a> • 
+          <a href="https://karnex.ir/dashboard-v2">داشبورد</a> • 
           <a href="https://karnex.ir/support">پشتیبانی</a>
         </div>
         <p style="margin-top: 20px; font-size: 11px; opacity: 0.7;">
@@ -285,7 +285,7 @@ export const EMAIL_TEMPLATES = {
         اولین پروژه خود را بسازید تا قدرت هوش مصنوعی کارنکس را تجربه کنید.
       </div>
     `,
-      { text: 'ورود به داشبورد', url: 'https://karnex.ir/dashboard' }
+      { text: 'ورود به داشبورد', url: 'https://karnex.ir/dashboard-v2' }
     ),
 
   supportReply: (ticketId: string, replyContent: string) =>
@@ -324,7 +324,7 @@ export const EMAIL_TEMPLATES = {
 
       <p>آماده‌اید قدم بعدی را بردارید؟ ادامه دهید و به اهداف خود نزدیک‌تر شوید.</p>
     `,
-      { text: 'مشاهده داشبورد', url: 'https://karnex.ir/dashboard' }
+      { text: 'مشاهده داشبورد', url: 'https://karnex.ir/dashboard-v2' }
     ),
 
   inactivityReminder: (days: number) =>
@@ -339,7 +339,7 @@ export const EMAIL_TEMPLATES = {
         فقط ۵ دقیقه وقت بگذارید و یکی از کارهای کوچک لیست خود را انجام دهید. همین قدم کوچک انگیزه شما را برمی‌گرداند.
       </div>
     `,
-      { text: 'بازگشت به پروژه', url: 'https://karnex.ir/dashboard' }
+      { text: 'بازگشت به پروژه', url: 'https://karnex.ir/dashboard-v2' }
     ),
 
   adminAlert: (type: 'NEW_USER' | 'PAYMENT' | 'System', details: string) =>

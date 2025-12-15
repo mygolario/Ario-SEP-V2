@@ -133,7 +133,7 @@ export async function resetPassword(
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: 'خطا در تغییر رمز عبور' };
 
-  return redirect('/dashboard');
+  return redirect('/dashboard-v2');
 }
 
 export async function signOut() {
