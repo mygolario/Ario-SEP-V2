@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { Sidebar } from '@/components/dashboard-v2/Sidebar';
 import { Topbar } from '@/components/dashboard-v2/Topbar';
+import { ToastProvider } from '@/components/ui/toast';
 
 export default async function DashboardV2Layout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -15,12 +16,14 @@ export default async function DashboardV2Layout({ children }: { children: React.
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950" dir="rtl">
-      <Sidebar />
-      <Topbar />
-      <div className="pt-16 mr-64">
-        <main className="p-6">{children}</main>
+    <ToastProvider>
+      <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950" dir="rtl">
+        <Sidebar />
+        <Topbar />
+        <div className="pt-16 mr-64">
+          <main className="p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
