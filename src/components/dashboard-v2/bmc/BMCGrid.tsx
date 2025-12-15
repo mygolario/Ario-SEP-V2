@@ -1,11 +1,14 @@
 'use client';
 
 import { saveArtifact } from '@/app/actions/artifacts';
+import { ShareDialog } from '@/components/dashboard-v2/share/ShareDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea'; // Assuming shadcn usage
+import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/toast';
+import { tourSteps } from '@/components/dashboard-v2/help/tourSteps'; // We will create this
+import { TourButton, useTour } from '@/components/dashboard-v2/help/TourGuide';
 import { Info, Loader2, Save } from 'lucide-react';
 import { useState } from 'react';
 
@@ -71,13 +74,29 @@ interface BMCGridProps {
   projectId: string;
   initialData?: Record<string, string>;
   version?: number;
+  readOnly?: boolean;
+  artifactId?: string;
+  shareToken?: string;
 }
 
-export function BMCGrid({ projectId, initialData = {}, version }: BMCGridProps) {
+export function BMCGrid({
+  projectId,
+  initialData = {},
+  version,
+  readOnly = false,
+  artifactId,
+  shareToken,
+}: BMCGridProps) {
   const { toast } = useToast();
   const [data, setData] = useState<Record<string, string>>(initialData);
   const [saving, setSaving] = useState(false);
   const [currentVersion, setCurrentVersion] = useState(version || 1);
+  const [currentShareToken, setCurrentShareToken] = useState<string | null>(shareToken || null);
+
+  const { startTour } = useTour({
+    steps: tourSteps.bmc,
+    tourId: 'bmc-tour-v1',
+  });
 
   const handleChange = (key: string, value: string) => {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -98,39 +117,36 @@ export function BMCGrid({ projectId, initialData = {}, version }: BMCGridProps) 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between bg-muted/30 p-4 rounded-lg border">
+      <div
+        className="flex items-center justify-between bg-muted/30 p-4 rounded-lg border"
+        id="bmc-header"
+      >
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">نسخه فعلی: {currentVersion}</span>
-          {/* Add history dropdown here later */}
-        </div>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="ml-2 h-4 w-4" />
+          {!readOnly && (
+            <>
+              <ShareDialog
+                artifactId={artifactId || null}
+                currentShareToken={currentShareToken}
+                onUpdate={setCurrentShareToken}
+              />
+              <TourButton onClick={startTour} />
+            </>
           )}
-          ذخیره تغییرات
-        </Button>
+          <span className="text-sm font-medium">نسخه فعلی: {currentVersion}</span>
+        </div>
+        {!readOnly && (
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="ml-2 h-4 w-4" />
+            )}
+            ذخیره تغییرات
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:grid-rows-3 min-h-[800px]">
-        {/* 
-                    Grid Layout Idea (Standard BMC):
-                    [Partners][Activities][Propositions][Relationships][Segments]
-                    [Partners][Resources ][Propositions][Channels     ][Segments]
-                    [Cost Struct        ][Cost Struct ][Revenue       ][Revenue ]
-                    
-                    Wait, standard BMC is often visualized:
-                    Left: Key Partners (Tall 2 rows)
-                    Mid-Left: Activities (Top), Resources (Bottom)
-                    Center: Value Prop (Tall 2 rows)
-                    Mid-Right: Relationships (Top), Channels (Bottom)
-                    Right: Segments (Tall 2 rows)
-                    Bottom: Cost (Half), Revenue (Half)
-
-                    Let's use specific classNames for col/row spans
-                 */}
-
         {BMC_BLOCKS.map((block) => {
           let className =
             'border p-4 h-full flex flex-col gap-2 bg-background shadow-sm hover:shadow-md transition-shadow';
@@ -143,8 +159,8 @@ export function BMCGrid({ projectId, initialData = {}, version }: BMCGridProps) 
           if (block.key === 'relationships') className += ' lg:col-span-1 lg:row-span-1';
           if (block.key === 'channels') className += ' lg:col-span-1 lg:row-span-1';
           if (block.key === 'segments') className += ' lg:col-span-1 lg:row-span-2';
-          if (block.key === 'cost') className += ' lg:col-span-2 lg:row-span-1'; // Bottom left
-          if (block.key === 'revenue') className += ' lg:col-span-3 lg:row-span-1'; // Bottom right (actually cost is usually left half, rev right half.
+          if (block.key === 'cost') className += ' lg:col-span-2 lg:row-span-1';
+          if (block.key === 'revenue') className += ' lg:col-span-3 lg:row-span-1';
 
           // Correction for bottom row
           if (block.key === 'cost')
@@ -155,7 +171,7 @@ export function BMCGrid({ projectId, initialData = {}, version }: BMCGridProps) 
               'border p-4 h-full flex flex-col gap-2 bg-background shadow-sm lg:col-span-3 lg:row-span-1';
 
           return (
-            <Card key={block.key} className={className}>
+            <Card key={block.key} className={className} id={`bmc-block-${block.key}`}>
               <CardHeader className="p-0 pb-2 space-y-0 relative">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-bold">{block.title}</CardTitle>
@@ -174,9 +190,10 @@ export function BMCGrid({ projectId, initialData = {}, version }: BMCGridProps) 
               <CardContent className="p-0 flex-1">
                 <Textarea
                   className="h-full min-h-[100px] resize-none border-0 focus-visible:ring-0 p-0 text-sm leading-relaxed"
-                  placeholder="اینجا بنویسید..."
+                  placeholder={readOnly ? '' : 'اینجا بنویسید...'}
                   value={data[block.key] || ''}
                   onChange={(e) => handleChange(block.key, e.target.value)}
+                  readOnly={readOnly}
                 />
               </CardContent>
             </Card>
