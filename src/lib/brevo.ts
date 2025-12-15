@@ -111,6 +111,8 @@ const getHtmlTemplate = (
 
     .content { 
       padding: 40px 30px; 
+      direction: rtl;
+      text-align: right;
     }
 
     .greeting { 
@@ -118,12 +120,15 @@ const getHtmlTemplate = (
       font-weight: 800; 
       margin-bottom: 25px; 
       color: #0f172a; 
+      text-align: right;
     }
 
     .message { 
       margin-bottom: 30px; 
       font-size: 16px; 
       color: #475569;
+      text-align: right;
+      line-height: 1.8;
     }
 
     .highlight-box { 
@@ -152,7 +157,7 @@ const getHtmlTemplate = (
     .cta-button { 
       display: inline-block; 
       background-color: #4f46e5; 
-      color: #ffffff; 
+      color: #ffffff !important; 
       padding: 16px 32px; 
       text-decoration: none; 
       border-radius: 12px; 
@@ -160,6 +165,7 @@ const getHtmlTemplate = (
       font-size: 16px; 
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
       transition: all 0.2s ease;
+      text-align: center;
     }
 
     .support-box {
