@@ -204,7 +204,7 @@ export async function POST(req: Request) {
     const { data: limitRow, error: limitError } = await supabase
       .rpc('check_and_increment_daily', {
         kind: 'generate',
-        limit: GENERATE_DAILY_LIMIT,
+        p_limit: GENERATE_DAILY_LIMIT,
       })
       .single<LimitCheckResult>();
 
@@ -421,7 +421,10 @@ export async function POST(req: Request) {
 
       if (projectError || !newProject) {
         console.error('Database Error (project):', projectError);
-        return NextResponse.json({ error: 'Database error creating project' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Database error creating project', details: projectError },
+          { status: 500 }
+        );
       }
 
       projectIdToUse = newProject.id;

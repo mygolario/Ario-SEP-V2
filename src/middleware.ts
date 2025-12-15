@@ -33,16 +33,33 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protect /dashboard route
-  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+  // Protect /dashboard and /dashboard-v2 routes
+  if (
+    (request.nextUrl.pathname.startsWith('/dashboard') ||
+      request.nextUrl.pathname.startsWith('/dashboard-v2')) &&
+    !user
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Redirect to dashboard if logged in and trying to access auth pages
+  // HARD CUTOVER: Redirect legacy /dashboard to /dashboard-v2
+  // We avoid redirecting if it's already /dashboard-v2
+  if (
+    request.nextUrl.pathname.startsWith('/dashboard') &&
+    !request.nextUrl.pathname.startsWith('/dashboard-v2')
+  ) {
+    const url = request.nextUrl.clone();
+    // Replace /dashboard with /dashboard-v2 in the path
+    url.pathname = request.nextUrl.pathname.replace('/dashboard', '/dashboard-v2');
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect to dashboard-v2 if logged in and trying to access auth pages
   if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
+    url.pathname = '/dashboard-v2';
     return NextResponse.redirect(url);
   }
 

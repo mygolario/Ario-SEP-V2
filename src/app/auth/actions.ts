@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { logAudit } from '@/lib/audit';
 import { ENV } from '@/env';
 import { verifyTurnstileToken } from '@/lib/turnstile';
 import { sendEmail, EMAIL_TEMPLATES } from '@/lib/brevo';
@@ -18,17 +19,25 @@ export async function login(prevState: AuthFormState, formData: FormData): Promi
   const password = String(formData.get('password')).trim();
 
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: 'ایمیل یا رمز عبور اشتباه است' };
+    const {
+      error,
+      data: { user },
+    } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return { error: 'ایمیل یا رمز عبور اشتباه است' };
+    }
 
     // Check verification status if policy requires strict verification
     // But user said "allow access but block sensitive actions".
     // So we just login.
+    if (user?.email) {
+      await logAudit('LOGIN', user.email, { provider: 'email' });
+    }
   } catch {
     return { error: 'خطای غیرمنتظره رخ داده است' };
   }
 
-  return redirect('/dashboard?login=success');
+  return redirect('/dashboard-v2');
 }
 
 export async function signup(prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -69,6 +78,10 @@ export async function signup(prevState: AuthFormState, formData: FormData): Prom
   if (error) {
     console.error('Signup error:', error);
     return { error: error.message || 'خطا در ثبت‌نام' };
+  }
+
+  if (data.user?.email) {
+    await logAudit('SIGNUP', data.user.email, { full_name: full_name });
   }
 
   // 4. Send Welcome Email (Optional/Bonus via Brevo)
@@ -120,7 +133,7 @@ export async function resetPassword(
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: 'خطا در تغییر رمز عبور' };
 
-  return redirect('/dashboard');
+  return redirect('/dashboard-v2');
 }
 
 export async function signOut() {
@@ -152,7 +165,9 @@ export async function resendVerification() {
         emailRedirectTo: `${ENV.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     });
-    if (error) return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
     return { success: true, message: 'ایمیل فعال‌سازی مجددا ارسال شد' };
   }
   return { error: 'کاربر یافت نشد' };
