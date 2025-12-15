@@ -38,6 +38,8 @@ export default async function BMCPage({ params }: PageProps) {
         projectId={params.id}
         initialData={artifact ? (artifact.data as Record<string, string>) : {}}
         version={artifact?.version}
+        artifactId={artifact?.id}
+        shareToken={artifact?.share_token}
       />
     </div>
   );
