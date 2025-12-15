@@ -421,7 +421,10 @@ export async function POST(req: Request) {
 
       if (projectError || !newProject) {
         console.error('Database Error (project):', projectError);
-        return NextResponse.json({ error: 'Database error creating project' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Database error creating project', details: projectError },
+          { status: 500 }
+        );
       }
 
       projectIdToUse = newProject.id;
