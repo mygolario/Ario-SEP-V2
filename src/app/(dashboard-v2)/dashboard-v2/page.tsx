@@ -5,7 +5,7 @@ import { RoadmapList } from '@/components/dashboard-v2/roadmap/RoadmapList';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { GenerateButton } from '@/components/dashboard-v2/roadmap/GenerateButton'; // Client component for action
+import { GenerateButton } from '@/components/dashboard-v2/GenerateButton'; // Client component for action
 
 interface RoadmapItem {
   id: string;
