@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { logAuditAction } from '@/lib/admin';
 
 export async function getProjects() {
   const supabase = createClient();
@@ -83,6 +84,9 @@ export async function createProject(formData: FormData) {
     console.error('Error creating project:', error);
     throw new Error('Failed to create project');
   }
+
+  // Audit Log
+  await logAuditAction('create_project', { title, project_id: data.id }, data.id);
 
   revalidatePath('/dashboard-v2/projects');
   redirect(`/dashboard-v2/projects/${data.id}`);

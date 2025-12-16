@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logAuditAction } from '@/lib/admin';
 
 export async function generateRoadmap(projectId: string) {
   const supabase = createClient();
@@ -91,6 +92,12 @@ export async function generateRoadmap(projectId: string) {
     throw new Error('Failed to generate roadmap');
   }
 
+  await logAuditAction(
+    'generate_roadmap',
+    { project_id: projectId, version: newVersion },
+    projectId
+  );
+
   revalidatePath(`/dashboard-v2/projects/${projectId}`);
   return { success: true };
 }
@@ -114,8 +121,7 @@ export async function getRoadmap(projectId: string) {
     .from('roadmap_items')
     .select('*')
     .eq('project_id', projectId)
-    .eq('user_id', user.id) // Security check implicit via RLS but strictly enforces valid project ownership too via join, but RLS on project_id handles it.
-    // Wait, roadmap_items doesn't have user_id column in my migration! It relies on project's user_id. RLS handles it.
+    // .eq('user_id', user.id) // Removed: column does not exist on roadmap_items
     .order('version', { ascending: false })
     .order('created_at', { ascending: true });
 
